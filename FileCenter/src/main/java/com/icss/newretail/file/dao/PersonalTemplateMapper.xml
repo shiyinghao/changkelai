@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.icss.newretail.file.dao.PersonalTemplateMapper">
+
+    <update id="insertRequestLog" parameterType="com.icss.newretail.file.entity.RequestLog">
+        insert into t_other_request_log ( uuid, service_name, service_action, type, result, in_param, out_param, create_time, return_time )
+        values ( #{uuid}, #{serviceName}, #{serviceAction}, ${type}, ${result}, #{inParam}, #{outParam}, #{createTime}, now() )
+    </update>
+
+</mapper>
