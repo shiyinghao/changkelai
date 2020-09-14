@@ -1,0 +1,8 @@
+#日常测试开发使用test dev ,生产环境打包使用prod
+spring:
+  application:
+    name: gateway-service
+  main:
+    web-application-type: none
+  profiles:
+    active: dev

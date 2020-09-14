@@ -1,0 +1,40 @@
+# 微服务名称和版本号
+service_description:
+  name: ${spring.application.name}
+  environment: development
+  version: 1.0.0
+# 服务中心的地址
+servicecomb:
+  service:
+    registry:
+      address: https://cse.cn-north-4.myhuaweicloud.com
+      instance:
+        watch: false
+  # 对外发布的地址
+  rest:
+    address: 0.0.0.0:18080
+  # 线下开发，关闭监控数据上报
+  monitor:
+    client:
+      enable: false
+  # 处理链配置
+  handler:
+    chain:
+      Consumer:
+        default: auth,qps-flowcontrol-consumer,loadbalance,bizkeeper-consumer
+  # 云上配置
+  credentials:
+    accessKey: GNNPTWLCL4IETQXQTDWQ  #结合用户实际值ak和加解密扩展进行配置
+    secretKey: 848JTnK8Q1y2DBwtcPzp8LFAc1ORVrTZHEacU81w  #结合用户实际值sk和加解密扩展进行配置
+    akskCustomCipher: default  #用户扩展解密com.huawei.paas.foundation.auth.credentials.AKSKCipher的实现类的name值， 默认default表示明文，无须加解密
+    project: cn-north-4
+  # 跨域
+  cors:
+    enabled: true
+    origin: "*"
+    allowCredentials: false
+    allowedMethod: PUT,DELETE,GET,PATCH,POST
+    allowedHeader: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, access_token, token
+    maxAge: 3600
+  uploads:
+    directory: tmp_for_upload_gateway
