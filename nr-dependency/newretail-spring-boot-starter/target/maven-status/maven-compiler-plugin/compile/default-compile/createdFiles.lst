@@ -1,0 +1,12 @@
+com\icss\newretail\config\mybatisplus\MyBatisPlusConfig.class
+com\icss\newretail\config\redis\PoolConfig.class
+com\icss\newretail\config\database\DatabaseConfig.class
+com\icss\newretail\config\redis\util\FastJsonRedisSerializer.class
+com\icss\newretail\config\redis\JedisConfig.class
+com\icss\newretail\config\druid\DruidStatFilter.class
+com\icss\newretail\config\redis\util\RedisLock.class
+com\icss\newretail\config\redis\CacheConfig.class
+com\icss\newretail\config\redis\util\RedisKeySerializer.class
+com\icss\newretail\config\redisson\RedissonConfig.class
+com\icss\newretail\config\druid\DruidStatViewServlet.class
+com\icss\newretail\config\redis\RedisTemplateConfig.class

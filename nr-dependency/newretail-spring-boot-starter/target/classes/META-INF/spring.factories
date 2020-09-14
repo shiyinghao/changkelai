@@ -1,0 +1,6 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.icss.newretail.config.redisson.RedissonConfig,\
+  com.icss.newretail.config.redis.CacheConfig,\
+  com.icss.newretail.config.redis.JedisConfig,\
+  com.icss.newretail.config.redis.PoolConfig,\
+  com.icss.newretail.config.redis.RedisTemplateConfig
