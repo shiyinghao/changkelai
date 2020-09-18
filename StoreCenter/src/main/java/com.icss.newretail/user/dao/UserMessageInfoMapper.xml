@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserMessageInfoMapper">
+
+    <select id="queryUserMessage" resultType="com.icss.newretail.model.UserMessageInfoDTO">
+        SELECT
+        a.*,b.user_name,c.org_seq
+        FROM
+        `t_user_message_info` a
+        LEFT JOIN t_user_info b on a.create_user =b.user_id
+        LEFT JOIN t_user_message_read_record c on a.uuid = c.message_id
+        where 1=1
+        <if test="para.messageSeq!=null and para.messageSeq!=''">
+            and a.message_seq like concat('%',#{para.messageSeq},'%')
+        </if>
+        <if test="para.messageTitle!=null and para.messageTitle!=''">
+            and a.message_title like concat('%',#{para.messageTitle},'%')
+        </if>
+        <if test="para.beginDate != null and para.beginDate != ''">
+            AND date_format(a.create_time,'%Y-%m-%d') &gt;= #{para.beginDate}
+        </if>
+        <if test="para.endDate != null and para.endDate != ''">
+            AND date_format(a.create_time ,'%Y-%m-%d') &lt;= #{para.endDate}
+        </if>
+        <if test="para.status != null and para.status != ''">
+            AND a.status =#{para.status}
+        </if>
+        order by a.update_time desc
+    </select>
+    <select id="queryUserMessageInfo" resultType="com.icss.newretail.model.UserMessageReadRecordDTO">
+        SELECT
+        a.create_time,
+        b.store_name,
+        b.auth_code,
+        b.up_org_zone,
+        b.base_name,
+        date_format(c.create_time,'%Y-%m-%d %H:%i:%S') as fbsj,
+        c.message_title,c.message_content
+        FROM
+        `t_user_message_read_record` a
+        LEFT JOIN t_user_store_info b ON a.org_seq = b.org_seq
+        LEFT JOIN t_user_message_info c ON a.message_id = c.uuid
+        where 1=1
+        <if test="para.messageId!=null and para.messageId!=''">
+            and a.message_id =#{para.messageId}
+        </if>
+        <if test="para.authCode!=null and para.authCode!=''">
+            and b.auth_code like concat('%',#{para.authCode},'%')
+        </if>
+        <if test="para.storeName!=null and para.storeName!=''">
+            and b.store_name like concat('%',#{para.storeName},'%')
+        </if>
+        <if test="para.baseName!=null and para.baseName!=''">
+            and b.base_name like concat('%',#{para.baseName},'%')
+        </if>
+        <if test="para.upOrgZone!=null and para.upOrgZone!=''">
+            and b.up_org_zone like concat('%',#{para.upOrgZone},'%')
+        </if>
+        <if test="para.beginDate != null and para.beginDate != ''">
+            AND date_format(a.create_time,'%Y-%m-%d') &gt;= #{para.beginDate}
+        </if>
+        <if test="para.endDate != null and para.endDate != ''">
+            AND date_format(a.create_time ,'%Y-%m-%d') &lt;= #{para.endDate}
+        </if>
+        order by a.create_time desc
+    </select>
+</mapper>

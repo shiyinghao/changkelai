@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserInfoMapper">
+    <!--用户配置信息查询-->
+    <select id="queryUserCustomizedParams" parameterType="string"
+            resultType="com.icss.newretail.model.UserCustomizedParamDTO">
+          SELECT user_id, param_type,param_id,param_type_value_id,param_value,tenant_id,create_time,create_user,update_time,update_user
+          FROM t_user_customized_param
+          WHERE user_id= #{userId}
+    </select>
+
+    <resultMap id="userInfoMap" type="com.icss.newretail.model.UserInfoDTO">
+        <id property="userId" column="user_id"></id>
+        <collection property="accounts" column="user_id" ofType="java.lang.String"
+                    javaType="java.util.List" select="queryAccountByUserId"></collection>
+
+        <collection property="orgList" column="user_id" ofType="com.icss.newretail.model.OrgList"
+                    javaType="java.util.List"
+                    select="queryOrgListByUserId"></collection>
+        <collection property="roleList" column="user_id" ofType="com.icss.newretail.model.RoleList"
+                    javaType="java.util.List"
+                    select="queryRoleListByUserId"></collection>
+    </resultMap>
+
+    <resultMap id="userMap" type="com.icss.newretail.model.UserInfoDTO">
+        <id property="userId" column="user_id"></id>
+        <collection property="authorityList" column="user_id" ofType="com.icss.newretail.model.AuthorityList"
+                    javaType="java.util.List" select="queryAuthorityById">
+        </collection>
+    </resultMap>
+
+    <select id="queryOrgListByUserId" resultType="com.icss.newretail.model.OrgList" parameterType="string">
+    SELECT b.org_seq ,b.org_name,a.user_type   FROM  t_user_org_relation AS a
+  INNER JOIN  t_user_organization AS b  ON  b.org_seq = a.org_seq WHERE a.user_id = #{userId}
+</select>
+
+    <select id="queryRoleListByUserId" resultType="com.icss.newretail.model.RoleList" parameterType="string">
+    SELECT b.role_id,b.role_name    FROM  t_user_user_role_relation AS a
+INNER JOIN  t_user_role AS b  ON  b.role_id = a.role_id WHERE a.user_id = #{userId}
+</select>
+
+    <select id="queryAccountByUserId" resultType="string" parameterType="string">
+        SELECT account FROM t_user_auth_method WHERE user_id=#{userId}
+    </select>
+
+    <select id="queryUsers"  resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT distinct a.user_id,a.user_name,a.tel,a.status,a.logout_time,a.create_time,a.user_type,a.real_name,a.sex,
+        a.signin_status,a.login_time,a.org_seq,a.email,a.employee_no,a.identity,d.user_name create_user
+        FROM t_user_info AS a
+        LEFT JOIN t_user_org_relation AS b ON a.user_id = b.user_id
+        LEFT JOIN t_user_organization AS c ON b.org_seq = c.org_seq
+        left join t_user_info AS d on a.create_user = d.user_id
+        <where>
+            <if test="request!=null">
+                <if test="request.orgSeq!=null and request.orgSeq!=''">
+                    c.org_seq=#{request.orgSeq}
+                </if>
+                <if test="request.userType!=null and request.userType!=''">
+                    AND b.user_type=#{request.userType}
+                </if>
+                <if test="request.userName!=null and request.userName!=''">
+                    AND (a.user_name LIKE CONCAT('%',#{request.userName},'%') OR a.real_name LIKE
+                    CONCAT('%',#{request.userName},'%') OR a.email LIKE CONCAT('%',#{request.userName},'%'))
+                </if>
+                <if test="request.tel!=null and request.tel!=''">
+                    AND a.tel=#{request.tel}
+                </if>
+                <if test="request.orgSeqName!=null and request.orgSeqName!=''">
+                    AND c.org_name LIKE CONCAT('%',#{request.orgSeqName},'%')
+                </if>
+            </if>
+        </where>
+    </select>
+
+    <select id="queryUserById" parameterType="string" resultMap="userInfoMap">
+        SELECT user_id,user_name,tel,status,logout_time,create_time, user_type,signin_status,real_name,sex,
+        login_time,org_seq,email,employee_no,identity,head_pic_url
+        FROM t_user_info
+        WHERE user_id=#{userId}
+    </select>
+
+    <!--<insert id="createUser" parameterType="com.icss.newretail.model.UserInfoDTO" >
+      INSERT INTO t_user_info (user_id, employee_no,user_name, identity, user_type, org_seq, password, tel, email,
+      signin_status, status,  create_time, tenant_id)
+      VALUES (#{userId},#{employeeNo},#{userName},#{identity},#{userType},#{orgSeq},#{passWord},#{tel},#{email},
+      #{signinStatus},#{status},now(),#{tenantId})
+    </insert>
+-->
+    <insert id="createAccount">
+        INSERT INTO t_user_auth_method (uuid,user_id,auth_method,account)
+        <choose>
+            <when test="type=='userName'">
+                VALUES (UUID(),#{user.userId},1,#{user.userName})
+            </when>
+            <when test="type=='tel'">
+                VALUES (UUID(),#{user.userId},2,#{user.tel})
+            </when>
+            <when test="type=='email'">
+                VALUES (UUID(),#{user.userId},3,#{user.email})
+            </when>
+        </choose>
+    </insert>
+
+    <resultMap type="com.icss.newretail.model.TenantDTO" id="TenantDTO">
+        <id column="tenant_id" property="tenantId"/>
+        <collection property="tenantTitles" column="tenant_id" javaType="java.util.ArrayList"
+                    ofType="com.icss.newretail.model.TenantTitleDTO"
+                    select="getTenanTitleDTO">
+        </collection>
+    </resultMap>
+
+    <select id="getTenanTitleDTO" resultType="com.icss.newretail.model.TenantTitleDTO">
+    	SELECT 
+	 		tenant_id,login_right_note,login_right_img,order_no
+		FROM t_user_tenant_title 
+		WHERE status = 1 AND tenant_id = #{tenantId}
+		ORDER BY order_no
+    </select>
+
+    <select id="queryHomepageInfo" resultMap="TenantDTO">
+    	SELECT 
+			tenant_id,tenant_code,tenant_name,corp_name,corp_website,corp_short_name,corp_title,corp_ico,corp_logo,corp_logo_in
+			corp_face_img,corp_welcome_img,remark
+		FROM t_user_tenant
+			 WHERE status = 1 
+			 AND tenant_id = #{tenantId}
+    </select>
+
+    <select id="queryStoreManagerByStoreId" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT a.* FROM t_user_info a
+        LEFT JOIN t_user_user_role_relation b ON a.user_id = b.user_id
+        LEFT JOIN t_user_role c ON b.role_id = c.role_id
+        WHERE a.org_seq ='1' AND c.role_req ='storeManager' AND a.`status`=1 AND c.`status`=1
+    </select>
+
+    <select id="qryClerk" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT a.* FROM t_user_info a join t_user_org_relation b on a.user_id = b.user_id
+        <where>
+            <if test="userclerkrequest.userName!=null and userclerkrequest.userName!=''">
+                a.user_name LIKE CONCAT('%',#{userclerkrequest.userName},'%')
+            </if>
+            <if test="userclerkrequest.tel !=null and userclerkrequest.tel !=''">
+                AND a.tel=#{userclerkrequest.tel}
+            </if>
+            <if test="userclerkrequest.identity!=null and userclerkrequest.identity!=''">
+                AND a.identity=#{userclerkrequest.identity}
+            </if>
+            <if test="userclerkrequest.status!=null and userclerkrequest.status!=''">
+                AND a.status=#{userclerkrequest.status}
+            </if>
+            <if test="userclerkrequest.userType!=null  and userclerkrequest.userType!=''">
+                AND b.user_type=#{userclerkrequest.userType}
+            </if>
+        </where>
+        ORDER BY a.create_time DESC
+    </select>
+
+    <resultMap id="userStoreMap" type="com.icss.newretail.model.UserQryStoreDTO">
+        <id property="authCode" column="auth_code"></id>
+        <collection property="userReviewRecordDTOList" column="auth_code" select="qryStoreRecedList"></collection>
+    </resultMap>
+
+    <resultMap id="userStoreRecodeMap" type="com.icss.newretail.model.UserReviewRecordDTO">
+    </resultMap>
+
+    <select id="qryStoreRecedList" resultMap="userStoreRecodeMap">
+        select a.* from t_user_review_record a left join t_user_review_info b on b.uuid = a.review_id
+        where b.auth_code = #{auth_code} and b.number is null and a.review_status in (1,5)
+    </select>
+
+    <select id="qryStore" resultMap="userStoreMap">
+        SELECT
+        a.uuid uuid,
+        a.org_seq orgSeq,
+        a.auth_code,
+        a.store_name storeName,
+        a.business_license businessLicense,
+        a.store_type storeType,
+        a.manager_area,
+        a.building_area buildingArea,
+        a.practical_area practicalArea,
+        a.leasehold_area leaseholdArea,
+        a.warehouse_area warehouseArea,
+        a.open_status openStatus,
+        a.open_time,
+        a.open_date openDate,
+        a.province province,
+        a.city,
+        a.county,
+        a.business_district_type businessDistrictType,
+        a.company_name companyName,
+        a.legal_person legalPerson,
+        a.legal_person_phone legalPersonPhone,
+        a.store_owner_name storeOwnerName,
+        a.store_owner_phone storeOwnerPhone,
+        a.store_phone storePhone,
+        a.store_owner_grade storeOwnerGrade,
+        a.store_address storeAddress,
+        a.store_address_detail storeAddressDetail,
+        a.store_lng storeLng,
+        a.store_lat storeLat,
+        a.doorway_pic doorwayPic,
+        a.store_owner_pic storeOwnerPic,
+        a.store_manager_pic storeManagerPic,
+        a.status,
+        a.create_time createTime,
+        a.create_user createUser,
+        a.update_time updateTime,
+        a.update_user updateUser,
+        a.gradelevel_id gradelevelId,
+        a.store_manager_phone storeManagerPhone,
+        a.store_manager_name storeManagerName,
+        a.merid,
+        a.agreement,
+        a.wechat_id wechatId,
+        a.up_org_zone upOrgZone,
+        a.base_code baseCode,
+        a.base_person_code basePersonCode,
+        a.up_org_seq upOrgSeq,
+        a.open_begin_time openBeginTime,
+        a.open_end_time openEndTime,
+        a.base_name baseName,
+        a.base_person_name basePersonName,
+        a.store_code storeCode,
+        a.shut_down_time shutDownTime,
+        a.is_icbc isIcbc,
+        a.front_card frontCard,
+        a.back_card backCard,
+        a.settlement_pic settlementPic,
+        a.created_date createdDate,
+        a.icbc_switch icbcSwitch,
+        a.icbc_update_time icbcUpdateTime,
+        a.bank_account bankAccount,
+        a.bank_name bankName,
+        a.terminal_id terminalId,
+        a.card_id cardId,
+        a.store_desc storeDesc,
+        a.is_info_complete isInfoComplete,
+        DATE_FORMAT(a.open_date,'%Y-%m-%d') openDate,b.review_status
+        reviewStatus,b.uuid reviewId
+        from
+        t_user_store_info a
+        left
+        join t_user_review_info b on a.auth_code = b.auth_code and
+        b.review_type=2 and b.number = (select MAX(number) from t_user_review_info where auth_code = a.auth_code and
+        review_type=2 )
+        <where>
+            1=1
+            <if test="type=='2' or type==2">
+                AND a.up_org_seq=#{userstorerequest.orgSeq}
+            </if>
+            <if test="type=='3' or type==3">
+                AND a.base_code=#{userstorerequest.orgSeq}
+            </if>
+            <if test="type=='4' or type==4">
+                AND a.org_seq=#{userstorerequest.orgSeq}
+            </if>
+            <if test="userstorerequest.storeName!=null and userstorerequest.storeName!=''">
+                and a.store_name LIKE CONCAT('%',#{userstorerequest.storeName},'%')
+            </if>
+            <if test="userstorerequest.storeOwnerName!=null and userstorerequest.storeOwnerName!=''">
+                AND a.store_owner_name LIKE CONCAT('%',#{userstorerequest.storeOwnerName},'%')
+            </if>
+            <if test="userstorerequest.storeManagerName!=null and userstorerequest.storeManagerName!=''">
+                AND a.store_manager_name LIKE CONCAT('%',#{userstorerequest.storeManagerName},'%')
+            </if>
+            <if test="userstorerequest.legalPerson!=null and userstorerequest.legalPerson!=''">
+                AND a.legal_person LIKE CONCAT('%',#{userstorerequest.legalPerson},'%')
+            </if>
+            <if test="userstorerequest.storeAddressDetail!=null and userstorerequest.storeAddressDetail!=''">
+                AND a.store_address_detail LIKE CONCAT('%',#{userstorerequest.storeAddressDetail},'%')
+            </if>
+            <if test="userstorerequest.phone!=null and userstorerequest.phone!=''">
+                AND
+                (a.legal_person_phone = #{userstorerequest.phone} or a.store_owner_phone = #{userstorerequest.phone}
+                or a.store_phone = #{userstorerequest.phone} or a.store_manager_name = #{userstorerequest.phone})
+            </if>
+            <if test="userstorerequest.storeType!=null and userstorerequest.storeType!=''">
+                AND a.store_type=#{userstorerequest.storeType}
+            </if>
+            <if test="userstorerequest.openStatus!=null">
+                AND a.open_status=#{userstorerequest.openStatus}
+            </if>
+            <if test="userstorerequest.icbcSwitch!=null and userstorerequest.icbcSwitch!=''">
+                AND a.icbc_switch=#{userstorerequest.icbcSwitch}
+            </if>
+            <if test="userstorerequest.storeCode!=null and userstorerequest.storeCode!=''">
+                AND a.store_code LIKE CONCAT('%',#{userstorerequest.storeCode},'%')
+            </if>
+            <if test="userstorerequest.authCode!=null and userstorerequest.authCode!=''">
+                AND a.auth_code LIKE CONCAT('%',#{userstorerequest.authCode},'%')
+            </if>
+            <if test="userstorerequest.province!=null and userstorerequest.province!=''">
+                AND a.province LIKE CONCAT('%',#{userstorerequest.province},'%')
+            </if>
+            <if test="userstorerequest.city!=null and userstorerequest.city!=''">
+                AND a.city LIKE CONCAT('%',#{userstorerequest.city},'%')
+            </if>
+            <if test="userstorerequest.companyName!=null and userstorerequest.companyName!=''">
+                AND a.company_name LIKE CONCAT('%',#{userstorerequest.companyName},'%')
+            </if>
+            <if test="userstorerequest.county!=null and userstorerequest.county!=''">
+                AND a.county LIKE CONCAT('%',#{userstorerequest.county},'%')
+            </if>
+            <if test="userstorerequest.upOrgZone!=null and userstorerequest.upOrgZone!=''">
+                AND a.up_org_zone LIKE CONCAT('%',#{userstorerequest.upOrgZone},'%')
+            </if>
+            <if test="userstorerequest.baseName!=null and userstorerequest.baseName!=''">
+                AND a.base_name LIKE CONCAT('%',#{userstorerequest.baseName},'%')
+            </if>
+        </where>
+        <if test="str ==null and str==''">
+            ORDER BY a.create_time DESC
+        </if>
+        <if test="str !=null and str!=''">
+            ORDER BY ${str}
+        </if>
+    </select>
+
+
+    <select id="queryStoreByUserId" resultType="com.icss.newretail.model.UserStoreNameDTO">
+        select si.*from t_user_store_info si  left join  t_user_org_relation r on si.org_seq=r.org_seq
+      where r.user_id= #{userId} and si.status=1 and r.status=1
+    </select>
+
+    <update id="updateAuthInfo">
+        update t_user_auth_method set account = #{account}
+        where user_id = #{userId} and auth_method = #{type}
+    </update>
+
+
+
+    <select id="queryAuthorityById" resultType="com.icss.newretail.model.AuthorityList">
+           SELECT
+            a.uuid,a.authority_name,a.authority_uri
+                    FROM
+                        `t_user_shop_applet_authority` a
+             LEFT JOIN  t_user_authority_relation b on a.uuid=b.authority_id
+            where 1=1 and b.user_id=#{user_id}
+    </select>
+
+    <!--
+    <select id="queryStorePerson" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT
+            a.org_seq,a.user_id,a.user_type,b.user_name,b.nick_name,b.real_name,b.sex,b.tel,b.email,b.head_pic_url
+        FROM
+                `t_user_org_relation` a
+        LEFT JOIN t_user_info b on a.user_id= b.user_id
+        where a.user_type in 6 and b.`status`=1 and a.org_seq=#{para.orgSeq}
+    </select>
+
+-->
+    <select id="queryUsersById" resultMap="userMap">
+        SELECT
+        a.user_type,a.org_seq,b.user_id,b.employee_no,b.nick_name,b.user_name,b.real_name,b.sex,b.identity,b.tel,b.email,b.head_pic_url
+        FROM
+        `t_user_org_relation` a
+        left join t_user_info b on a.user_id=b.user_id
+        where 1=1 and a.user_type='6' and b.`status`='1' and b.user_id is not null
+        <if test="para!=null">
+            <if test="para.orgSeq!=null and para.orgSeq!=''">
+                and a.org_seq=#{para.orgSeq}
+            </if>
+            <if test="para.keyWords !=null">
+                <![CDATA[ AND (LOCATE(#{para.keyWords},b.tel)>0 OR LOCATE(#{para.keyWords},b.real_name)>0) ]]>
+            </if>
+        </if>
+    </select>
+
+
+    <select id="queryStorePerson" resultMap="userMap">
+        SELECT
+        a.user_type,a.org_seq,b.user_id,b.employee_no,b.nick_name,b.user_name,b.real_name,b.sex,b.identity,b.tel,b.email,b.head_pic_url
+        FROM
+        `t_user_org_relation` a
+        left join t_user_info b on a.user_id=b.user_id
+        where 1=1 and a.user_type='6' and b.`status`='1' and b.user_id is not null
+        <if test="para!=null">
+            <if test="para.orgSeq!=null and para.orgSeq!=''">
+                and a.org_seq=#{para.orgSeq}
+            </if>
+            <if test="para.keyWords !=null">
+                <![CDATA[ AND (LOCATE(#{para.keyWords},b.tel)>0 OR LOCATE(#{para.keyWords},b.real_name)>0) ]]>
+            </if>
+        </if>
+    </select>
+
+    <select id="queryManage" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT
+            a.org_seq,a.user_id,a.user_type,b.user_name,b.nick_name,b.real_name,b.sex,b.tel,b.email,b.head_pic_url
+        FROM
+                `t_user_org_relation` a
+        LEFT JOIN t_user_info b on a.user_id= b.user_id
+        where a.user_type in ${para.initFlag} and b.`status`=1 and a.org_seq=#{para.orgSeq}
+    </select>
+
+    <select id="queryStoreUsers" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT
+            a.user_type,a.org_seq,b.user_id,b.employee_no,b.nick_name,b.user_name,b.real_name,b.sex,b.identity,b.tel,b.email,b.head_pic_url
+        FROM
+        t_user_org_relation a
+        LEFT JOIN t_user_info b on  a.user_id =b.user_id
+        WHERE
+            a.org_seq = #{para.orgSeq}
+        AND b. STATUS = '1'
+        ORDER BY a.user_type asc
+    </select>
+    <select id="queryUserInfo" resultType="com.icss.newretail.model.ShopUserInfoDTO">
+        select * from t_user_info where user_id=#{userId}
+    </select>
+    <select id="queryManangerById" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT
+            *
+        FROM
+            `t_user_org_relation` a where a.user_type='5'
+        and  a.org_seq= #{orgSeq}
+    </select>
+
+    <select id="queryOrgType" resultType="com.icss.newretail.model.OrganizationDTO">
+        select *
+        from nr_user.t_user_organization
+        where org_seq = #{orgSeq};
+    </select>
+
+    <!--根据基地 orgSeq 查询战区信息-->
+    <select id="queryUpOrg" resultType="com.icss.newretail.model.OrganizationDTO">
+        select *
+        from nr_user.t_user_organization
+        where org_seq = (select up_org_seq
+                         from nr_user.t_user_organization
+                         where org_seq = #{orgSeq})
+    </select>
+
+
+    <select id="queryMemberUserById" resultType="com.icss.newretail.model.MemberUserDTO">
+        SELECT * FROM `t_user_info` a where a.user_id= #{userId}
+    </select>
+    <select id="queryManagerById" resultType="com.icss.newretail.model.MemberUserDTO">
+         SELECT
+            b.head_pic_url,b.employee_no,b.nick_name,b.user_name,b.user_type,b.user_id,b.tel,b.real_name
+        FROM
+           t_user_org_relation a
+        LEFT JOIN t_user_info b on a.user_id =b.user_id
+        where a.user_type='5' and a.org_seq=#{para.orgSeq} and b.status = 1
+    </select>
+    <select id="getPhoneAsByOwn" resultType="java.lang.String">
+        select distinct tel from t_user_info a left join t_user_org_relation b  on a.user_id = b.user_id
+        where a.status=1 and b.status=1 and b.user_type !=4 and a.tel = #{phone}
+    </select>
+
+    <!--查询基地经理-->
+    <select id="queryManagerList" resultType="com.icss.newretail.model.UserInfoDTO">
+        select *
+        from nr_user.t_user_org_relation a
+                 left join nr_user.t_user_organization b on a.org_seq = b.org_seq
+                 left join nr_user.t_user_info c on c.user_id = a.user_id
+        where 1=1
+         <if test="orgSeqs != null and orgSeqs.size > 0">
+             and a.org_seq in
+             <foreach collection="orgSeqs" item="orgSeq" open="(" separator="," close=")">
+                 #{orgSeq}
+             </foreach>
+         </if>
+        and a.user_type = 3
+    </select>
+    <!--根据门店 id 查询店长或店员信息-->
+    <select id="queryShopOwner" resultType="com.icss.newretail.model.UserInfoDTO">
+        select *
+        from nr_user.t_user_info b
+        where b.user_id in (select a.user_id
+                           from nr_user.t_user_org_relation a
+                           where org_seq = #{orgSeq}
+                             and user_type = #{userType});
+    </select>
+    <!--根据用户 id 查询用户手机号-->
+    <select id="queryTel" resultType="com.icss.newretail.model.UserInfoDTO">
+        select *
+        from nr_user.t_user_info
+        where user_id = #{userId}
+    </select>
+    <select id="queryManagerListByUpOrg" resultType="com.icss.newretail.model.BaseDTO">
+        select *
+        from nr_user.t_user_organization
+        where up_org_seq = #{orgSeq}
+    </select>
+    <select id="queryOrg" resultType="com.icss.newretail.model.BaseDTO">
+        select org_seq,org_name from nr_user.t_user_organization where org_seq = #{orgSeq}
+    </select>
+    <select id="queryOrgInfo" resultType="com.icss.newretail.model.OrganizationDTO">
+        select * from nr_user.t_user_organization where 1 = 1
+        <if test="orgSeqList != null and orgSeqList.size()>0">
+            and org_seq in
+            <foreach collection="orgSeqList" item="orgSeq" open="(" separator="," close=")">
+                #{orgSeq}
+            </foreach>
+        </if>
+
+    </select>
+    <select id="queryOrgInfoByOrgSeq" resultType="com.icss.newretail.model.OrganizationDTO">
+        select * from nr_user.t_user_organization where org_seq =#{orgSeq}
+    </select>
+    <select id="queryDownOrg" resultType="com.icss.newretail.model.OrganizationDTO">
+        select * from nr_user.t_user_organization where up_org_seq =#{orgSeq}
+    </select>
+
+    <select id="queryStoreUserInfo" resultType="com.icss.newretail.model.StoreUserInfoDTO">
+        SELECT
+        b.user_id,
+        case when b.real_name is null then b.user_name else b.real_name end
+        realName,a.org_seq,b.head_pic_url,b.status,b.tel,b.create_time,b.id_card,d.auth_code
+        FROM
+        t_user_org_relation a
+        LEFT JOIN
+        t_user_info b ON a.user_id = b.user_id
+        LEFT JOIN
+        t_user_organization c ON a.org_seq=c.org_seq
+        LEFT JOIN
+        t_user_login_info d ON a.user_id = d.user_id AND a.org_seq = d.org_seq
+        WHERE a.user_type = 6 and b.status !=2
+        <if test="type != null and type =='2'.toString() ">
+            AND a.org_seq in
+            (select b.org_seq
+            from t_user_organization a
+            left join t_user_organization b on a.org_seq=b.up_org_seq where
+            a.up_org_seq=#{storeUserInfoDTO.orgSeq})
+        </if>
+        <if test="type != null and  type =='3'.toString() ">
+            AND a.org_seq in (select org_seq from t_user_organization where up_org_seq=#{storeUserInfoDTO.orgSeq})
+        </if>
+        <if test="type != null and type =='4'.toString() ">
+            AND a.org_seq = #{storeUserInfoDTO.orgSeq}
+        </if>
+        <if test="storeUserInfoDTO.realName !=null and storeUserInfoDTO.realName !='' ">
+            AND (b.real_name like concat ('%',#{storeUserInfoDTO.realName},'%') or b.user_name like concat
+            ('%',#{storeUserInfoDTO.realName},'%'))
+        </if>
+        <if test="storeUserInfoDTO.tel !=null and storeUserInfoDTO.tel !='' ">
+            AND b.tel like concat ('%',#{storeUserInfoDTO.tel},'%')
+        </if>
+        <if test="storeUserInfoDTO.status !=null and storeUserInfoDTO.status !='' ">
+            AND b.status = #{storeUserInfoDTO.status}
+        </if>
+        <if test="storeUserInfoDTO.storeName !=null and storeUserInfoDTO.storeName !='' ">
+            AND c.org_name LIKE concat ('%',#{storeUserInfoDTO.storeName},'%')
+        </if>
+        <if test="storeUserInfoDTO.idCard !=null and storeUserInfoDTO.idCard !='' ">
+            AND b.id_card LIKE concat ('%',#{storeUserInfoDTO.idCard},'%')
+        </if>
+        order by b.create_time
+    </select>
+
+    <select id="queryUserInfoList" resultType="com.icss.newretail.model.UserInfoDTO">
+        SELECT
+            a.*,
+            b.org_seq as storeOrgSeq,
+            b.org_name as storeOrgName,
+            b.org_no as storeOrgCode
+        FROM
+            t_user_info a
+            LEFT JOIN t_user_org_relation c ON a.user_id = c.user_id
+            LEFT JOIN t_user_organization b ON c.org_seq = b.org_seq
+        WHERE 1 = 1
+            AND a.`status` = 1
+            AND a.user_type IN ( 5, 6 )
+            <if test="param.orgList != null and param.orgList.size() > 0">
+                and b.org_seq IN
+                <foreach collection="param.orgList" item="org" open="(" separator="," close=")">
+                    #{org}
+                </foreach>
+            </if>
+            <if test="param.realName != null and param.realName != ''">
+                and a.real_name like CONCAT('%',#{param.realName},'%')
+            </if>
+    </select>
+
+    <select id="queryBaseUserList" resultType="com.icss.newretail.model.UserInfoDTO">
+        select a.* from t_user_info a LEFT JOIN t_user_org_relation b on a.user_id = b.user_id
+        left join t_user_organization c on b.org_seq = c.org_seq where 1=1 and a.user_type = 3
+        <choose>
+            <when test="orgSeqList != null and orgSeqList.size()>0">
+                and c.org_seq in
+                <foreach collection="orgSeqList" item="orgSeq" open="(" separator="," close=")">
+                    #{orgSeq}
+                </foreach>
+            </when>
+            <otherwise>
+                and c.org_seq is null
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryUserOrganizationInfo" resultType="com.icss.newretail.model.UserOrganizationInfoDTO">
+        select
+            t1.user_id as baseUserId,
+            t1.real_name as baseUserName,
+            t1.org_seq as baseOrgSeq,
+            t1.org_name as baseOrgName,
+            t2.org_seq as warZoneOrgSeq,
+            t2.org_name as warZoneOrgName
+        from (
+            select a.user_id,a.real_name,c.org_seq,c.org_name,c.up_org_seq from t_user_info a
+            LEFT JOIN t_user_org_relation b on a.user_id = b.user_id
+            left join t_user_organization c on b.org_seq = c.org_seq
+            where 1=1 and a.user_type = 3 and a.user_id = #{userId}
+        ) t1, t_user_organization t2 where t1.up_org_seq = t2.org_seq
+    </select>
+   
+    <select id="qryStoreRecedListInfo" resultType="com.icss.newretail.model.UserReviewRecordDTO">
+        select a.* from t_user_review_record a left join t_user_review_info b on b.uuid = a.review_id
+        where b.auth_code = #{auth_code} and b.number is null and a.review_status in (1,5)
+    </select>
+    <select id="queryAccountById" resultType="java.lang.String">
+        SELECT account FROM t_user_auth_method WHERE user_id=#{userId}
+    </select>
+    <select id="queryOrgListById" resultType="com.icss.newretail.model.OrgList">
+        SELECT b.org_seq ,b.org_name,a.user_type   FROM  t_user_org_relation AS a
+        INNER JOIN  t_user_organization AS b  ON  b.org_seq = a.org_seq WHERE a.user_id = #{userId}
+    </select>
+    <select id="queryRoleListById" resultType="com.icss.newretail.model.RoleList">
+         SELECT b.role_id,b.role_name    FROM  t_user_user_role_relation AS a
+         INNER JOIN  t_user_role AS b  ON  b.role_id = a.role_id WHERE a.user_id = #{userId}
+    </select>
+    <select id="getAllAuthCode" resultType="com.icss.newretail.model.UserStoreVerifyDTO">
+        SELECT uuid,auth_code,date,company_name FROM t_user_store_verify WHERE 1=1
+        <if test="param.authCode != null and param.authCode != ''">
+            and auth_code = #{param.authCode}
+        </if>
+        <if test="param.companyName != null and param.companyName != ''">
+            and company_name like CONCAT('%',#{param.companyName},'%')
+        </if>
+        ORDER BY date DESC
+    </select>
+    <select id="qryStoreAmount" resultType="com.icss.newretail.model.UserQryStoreDTO">
+        SELECT a.*,DATE_FORMAT(a.open_date,'%Y-%m-%d') openDate,b.review_status reviewStatus,b.uuid reviewId from
+        t_user_store_info a
+        left
+        join t_user_review_info b on a.auth_code = b.auth_code and
+        b.review_type=2 and b.number = (select MAX(number) from t_user_review_info where auth_code = a.auth_code and
+        review_type=2 )
+        <where>
+            1=1 AND a.open_status = 1
+           </where>
+        ORDER BY a.create_time DESC
+    </select>
+</mapper>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.TenantMapper">
+    <select id="getByTenantCode" resultMap="TenantDTO">
+        SELECT tenant_id, tenant_code, tenant_name, corp_name, corp_website, corp_short_name,
+               corp_title, corp_ico, corp_logo, corp_logo_in, corp_face_img, corp_welcome_img,
+               instance_id,front_end_url,admin_url,ip,expire_time,status, remark, create_user,
+                create_time, update_user, update_time
+        FROM t_user_tenant
+        WHERE tenant_code = #{tenantCode}
+    </select>
+
+    <select id="queryTenantById" resultMap="TenantDTO">
+        SELECT tenant_id, tenant_code, tenant_name, corp_name, corp_website, corp_short_name,
+               corp_title, corp_ico, corp_logo, corp_logo_in, corp_face_img, corp_welcome_img,
+               instance_id,front_end_url,admin_url,ip,expire_time,status, remark, create_user,
+               create_time, update_user, update_time
+        FROM t_user_tenant
+        WHERE tenant_id = #{tenantId}
+    </select>
+    <select id="queryTenants" parameterType="com.icss.newretail.model.TenantRequest" resultType="com.icss.newretail.model.TenantDTO">
+        SELECT tenant_id, tenant_code, tenant_name, corp_name, corp_website, corp_short_name,
+               corp_title, corp_ico, corp_logo, corp_logo_in, corp_face_img, corp_welcome_img,
+               instance_id,front_end_url,admin_url,ip,expire_time,status, remark, create_user,
+               create_time, update_user, update_time
+        FROM t_user_tenant
+        <where>
+            status = 1
+            <if test="request.tenantId != null and request.tenantId != ''">
+                AND tenant_id = #{request.tenantId}
+            </if>
+        </where>
+    </select>
+
+    <resultMap type="com.icss.newretail.model.TenantDTO" id="TenantDTO">
+        <id column="tenant_id" property="tenantId"/>
+        <collection property="tenantTitles" column="tenant_id" javaType="java.util.ArrayList" ofType="com.icss.newretail.model.TenantTitleDTO"
+                    select="getTenanTitleDTO">
+        </collection>
+    </resultMap>
+
+    <select id="getTenanTitleDTO" resultType="com.icss.newretail.model.TenantTitleDTO">
+    	SELECT
+	 		uuid,status,tenant_id,login_right_note,login_right_img,order_no,create_user,create_time,update_user,update_time
+		FROM t_user_tenant_title
+		WHERE `status` = 1 AND tenant_id = #{tenantId}
+		ORDER BY order_no
+    </select>
+    
+    <select id="queryLastTenantId" resultType="String">
+        SELECT tenant_id FROM `t_user_tenant` ORDER BY create_time DESC LIMIT 1
+    </select>
+</mapper>

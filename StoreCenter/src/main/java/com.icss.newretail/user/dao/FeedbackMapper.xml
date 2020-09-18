@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.FeedbackMapper">
+
+    <resultMap id="prombleMap" type="com.icss.newretail.model.FeedbackDTO">
+        <id column="uuid" property="uuid" />
+        <collection property="feedbackPictures" column="uuid" ofType="com.icss.newretail.model.FeedbackPicturesDTO"
+                    javaType="java.util.List" select="queryPicturesById"></collection>
+    </resultMap>
+
+    <select id="queryPicturesById" resultType="com.icss.newretail.model.FeedbackPicturesDTO" parameterType="string">
+       SELECT * FROM `t_user_feedback_pictures`a where a.feedback_id=#{uuid}
+    </select>
+
+    <select id="queryFeedback" resultMap="prombleMap">
+        SELECT
+            *
+        FROM
+            `t_user_feedback`a
+        where 1=1
+        <if test="para!=null">
+            <if test="para.orgSeq !=null and para.orgSeq!=''">
+                and a.org_seq=#{para.orgSeq}
+            </if>
+        </if>
+        ORDER BY a.create_time desc
+    </select>
+
+    <select id="queryFeedbackInfoById" resultMap="prombleMap">
+        SELECT
+            *
+        FROM
+            `t_user_feedback`a
+        where 1=1 and a.uuid =#{uuid}
+    </select>
+</mapper>

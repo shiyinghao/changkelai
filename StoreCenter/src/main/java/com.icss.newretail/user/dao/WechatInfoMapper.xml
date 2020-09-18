@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.WechatInfoMapper">
+    <select id="getWechatInfoByOrgSeq" resultType="com.icss.newretail.model.WechatInfoDTO">
+        SELECT wechat_uuid, org_seq, corp_id, corp_secret, corp_code, corp_name, 
+        	   corp_type, agent_id, agent_name, user_code, password, qr_code, corp_key, 
+        	   wechat_pic, status, comments, create_user, create_time, update_user, update_time
+          FROM t_user_wechat_info
+         WHERE org_seq = #{orgSeq} 
+           AND status = 1
+    </select>
+
+    <select id="getWechatInfoByUserId" resultType="string">
+          SELECT
+            b.uuid
+        FROM
+            t_user_info  a
+        LEFT JOIN t_user_store_info b on a.org_seq =b.org_seq
+        where a.user_id=#{shareId}
+    </select>
+
+    <select id="getorgSeqByUserId" resultType="string">
+         SELECT
+            a.org_seq
+        FROM
+            t_user_info  a
+        where a.user_id=#{shareId}
+    </select>
+
+</mapper>

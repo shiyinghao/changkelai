@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.NoticeMapper">
+
+    <select id="queryNoticeById" resultType="com.icss.newretail.model.NoticeDTO">
+        SELECT uuid, org_seq, title, content, publisher, publish_time, status,
+         create_user, create_time, update_user, update_time, tenant_id
+        FROM t_user_notice
+        WHERE uuid =#{noticeId}
+    </select>
+
+    <select id="queryNotices" resultType="com.icss.newretail.model.NoticeDTO">
+        SELECT uuid, org_seq, title, content, publisher, publish_time, status,
+        create_user, create_time, update_user, update_time, tenant_id
+        FROM t_user_notice
+        WHERE tenant_id=#{tenantId}
+        <if test="request.orgSeq!=null and request.orgSeq!=''">
+            AND org_seq =#{request.orgSeq}
+        </if>
+        <if test="request.title!=null and request.title!=''">
+            <![CDATA[ AND LOCATE(#{request.title},title) > 0 ]]>
+        </if>
+        <if test="request.content!=null and request.content!=''">
+            <![CDATA[ AND LOCATE(#{request.content},content) > 0 ]]>
+        </if>
+        <if test="request.beginTime!=null and request.beginTime!=''">
+            <![CDATA[ AND publish_time >= str_to_date(#{request.beginTime}, '%Y-%m-%d %T') ]]>
+        </if>
+        <if test="request.endTime!=null and request.endTime!=''">
+            <![CDATA[ AND publish_time <= str_to_date(#{request.endTime}, '%Y-%m-%d %T') ]]>
+        </if>
+        <if test="request.publisher!=null and request.publisher!=''">
+            AND publisher =#{request.publisher}
+        </if>
+        <if test="request.status!=null ">
+            AND status =#{request.status}
+        </if>
+
+    </select>
+</mapper>

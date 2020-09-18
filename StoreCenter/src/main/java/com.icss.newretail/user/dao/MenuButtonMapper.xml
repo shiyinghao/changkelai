@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.MenuButtonMapper">
+
+    <select id="getMenuButtonByMenuIds" parameterType="List" resultType="com.icss.newretail.user.entity.MenuButton">
+            SELECT * FROM t_user_menu_btn WHERE uuid in
+            <foreach collection="list" item="menuId" index="index" open="(" close=")" separator=",">
+                #{menuId}
+            </foreach>
+    </select>
+
+</mapper>

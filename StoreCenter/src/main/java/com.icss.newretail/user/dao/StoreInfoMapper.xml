@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.StoreInfoMapper">
+
+    <update id="updateGradelevel"  parameterType="java.lang.String"  >
+        UPDATE t_user_store_info SET  gradelevel_id =
+        (SELECT a.UUID FROM t_user_store_gradelevel_rule a , t_user_store_bonuspoint b WHERE
+        b.org_seq= #{orgSeq} AND  a.status = 1 AND
+        a.begin_score &lt;= b.total_score AND  end_score>b.total_score)
+        WHERE org_seq= #{orgSeq}
+    </update>
+
+    <update id="updateGradelevelOne">
+        UPDATE t_user_store_info  SET  gradelevel_id = #{storeGradelevel}
+        where  org_seq= #{orgSeq}
+    </update>
+</mapper>

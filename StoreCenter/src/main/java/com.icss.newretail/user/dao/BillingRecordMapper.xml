@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.BillingRecordMapper">
+
+    <resultMap id="billingMap" type="com.icss.newretail.model.BillingRecordDTO">
+        <id column="bill_id" property="billId" />
+        <collection property="billingOrderShipDTOList" column="bill_id" ofType="com.icss.newretail.model.BillingOrderShipDTO"
+                    javaType="java.util.List" select="queryOrderShipById"></collection>
+    </resultMap>
+
+    <select id="queryOrderShipById" resultType="com.icss.newretail.model.BillingOrderShipDTO" parameterType="string">
+       SELECT * FROM `t_user_store_billing_order_ship`a where a.bill_id=#{billId}
+    </select>
+
+    <select id="queryBillingRecord" resultMap="billingMap">
+        SELECT
+        a.*,
+        a.bill_id billId
+        FROM
+        `t_user_store_billing_record`a
+        where 1=1
+        <if test="para!=null">
+            <if test="para.orgSeq !=null and para.orgSeq!=''">
+                and a.org_seq=#{para.orgSeq}
+            </if>
+            <if test="para.createUser !=null and para.createUser!=''">
+                and a.create_user=#{para.createUser}
+            </if>
+            <if test="para.status !=null and para.status!='' and para.status != '9'.toString()">
+                and a.status=#{para.status}
+            </if>
+            <if test="para.status !=null and para.status!='' and para.status == '9'.toString() ">
+                and a.status !='0'
+            </if>
+        </if>
+        ORDER BY a.create_time desc
+    </select>
+    <select id="queryBillingRecordById" resultMap="billingMap">
+        SELECT
+        a.*,
+        a.bill_id billId
+        FROM
+        `t_user_store_billing_record`a
+        where a.bill_id=#{billId}
+    </select>
+</mapper>

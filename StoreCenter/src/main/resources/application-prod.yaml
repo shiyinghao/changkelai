@@ -1,0 +1,86 @@
+spring:
+  application:
+    name: user-service
+  main:
+    web-application-type: none
+    allow-bean-definition-overriding: true
+  cache:
+    redis:
+      cache-null-values: false
+      time-to-live: 20s
+  datasource:
+    druid:
+      driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://119.3.215.66:3306/nr_ckluser?useSSL=false
+      username: root
+      password: 'CloudBU@0316!'
+      filters: stat,wall
+      max-active: 50
+      validation-query: select 'x'
+  redis:
+    host: 124.70.17.33
+    port: 6379
+    timeout: 2000
+    password: 'CloudBU@0316!'
+    jedis:
+      pool:
+        max-total: 40
+        max-idle: 8
+        min-idle: 0
+mybatis-plus:
+  mapper-locations: classpath:/com/icss/newretail/*/dao/*Mapper.xml
+  #实体扫描，多个package用逗号或者分号分隔
+  typeAliasesPackage: com.icss.newretail.*.entity,com.icss.newretail.*.vo,com.icss.newretail.*.dto,com.icss.newretail.*.model,com.icss.newretail.*.bean
+  configuration:
+    #配置返回数据库(column下划线命名&&返回java实体是驼峰命名)，自动匹配无需as（没开启这个，SQL需要写as： select user_id as userId）
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    #配置JdbcTypeForNull, oracle数据库必须配置
+    jdbc-type-for-null: 'null'
+#日志目录
+logback:
+  loghome: /home
+#对外暴露端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+# 微服务名称和版本号
+service_description:
+  name: ${spring.application.name}
+  environment: production
+  version: 1.0.0
+# 注册中心配置
+servicecomb:
+  # 注册中心的地址
+  service:
+    registry:
+      address: https://cse.cn-north-4.myhuaweicloud.com
+      instance:
+        watch: false
+  # 对外发布的地址
+  rest:
+    address: 0.0.0.0:9092
+  # 线下开发，关闭监控数据上报
+  monitor:
+    client:
+      enable: false
+  # 云上配置
+  credentials:
+    accessKey: PXAXOANO9R7R70MIEV1H  #结合用户实际值ak和加解密扩展进行配置
+    secretKey: v0RyF7WCaXzE8t5mPjLw9ioZWrbZIL5cDcGEtLd2  #结合用户实际值sk和加解密扩展进行配置
+    akskCustomCipher: default  #用户扩展解密com.huawei.paas.foundation.auth.credentials.AKSKCipher的实现类的name值， 默认default表示明文，无须加解密
+    project: cn-north-4
+  # 跨域
+  cors:
+    enabled: true
+    origin: "*"
+    allowCredentials: false
+    allowedMethod: PUT,DELETE,GET,PATCH,POST
+    allowedHeader: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With, access_token, token
+    maxAge: 3600

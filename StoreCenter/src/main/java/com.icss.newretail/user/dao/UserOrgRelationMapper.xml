@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserOrgRelationMapper">
+
+    <insert id="batchAdd" parameterType="list">
+        insert into t_user_org_relation
+        (uuid,user_id,org_seq,user_type,status,create_time,create_user,update_time,update_user)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.uuid},#{item.userId},#{item.orgSeq},#{item.userType},1,now(),#{item.createUser},now(),#{item.updateUser})
+        </foreach>
+    </insert>
+    <update id="updateByStore">
+        UPDATE
+        t_user_store_info
+        SET
+        <if test=" userclerk.userType =='4'.toString  and userclerk.realName!=null and userclerk.realName!=''">
+            store_owner_name=#{userclerk.realName},
+        </if>
+        <if test=" userclerk.userType =='5'.toString  and userclerk.realName!=null and userclerk.realName!=''">
+            store_manager_name=#{userclerk.realName},
+        </if>
+        <if test="userclerk.userType =='4'.toString  and userclerk.headPicUrl !=null and userclerk.headPicUrl!='' ">
+            store_owner_pic = #{userclerk.headPicUrl},
+        </if>
+        <if test="userclerk.userType =='5'.toString  and userclerk.headPicUrl !=null and userclerk.headPicUrl!=''  ">
+            store_manager_pic = #{userclerk.headPicUrl},
+        </if>
+        update_user=#{currUser},
+        update_time=now()
+        where
+        org_seq in (select distinct org_seq from t_user_org_relation where user_id = #{userclerk.userId})
+    </update>
+    <select id="getOrgRelationZQ" resultType="com.icss.newretail.user.entity.UserOrgRelation">
+
+
+    </select>
+    <select id="getIsWs" resultType="integer">
+        SELECT CASE WHEN (comCount-comSum = 0) then 1 ELSE 0 END type FROM (
+        SELECT case when sum( a.is_info_complete) !='null' then sum( a.is_info_complete) else -1 END
+        comSum,count(a.is_info_complete) comCount
+        FROM t_user_info a left join t_user_org_relation b on a.user_id = b.user_id
+        WHERE
+        b.org_seq = #{orgSeq} and b.user_type=6 and b.status=1
+        <if test="userId != null and userId != ''">
+            and a.user_id != #{userId}
+        </if>
+        )c
+    </select>
+
+</mapper>

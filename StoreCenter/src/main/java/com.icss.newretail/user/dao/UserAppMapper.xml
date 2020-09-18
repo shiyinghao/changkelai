@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserAppMapper">
+    <resultMap id="appMap" type="com.icss.newretail.model.App">
+        <id column="app_id" property="appId"></id>
+        <collection property="modules" column="app_id"
+                    ofType="com.icss.newretail.model.AppModuleRelation"
+                    javaType="java.util.List"
+                    select="getAppModuleRelationByAppid"></collection>
+    </resultMap>
+
+    <select id="getAppModuleRelationByAppid" parameterType="string" resultType="com.icss.newretail.model.AppModuleRelation">
+        SELECT  app_module_relation_id, app_id, module_id, module_number, tenant_id, create_time, create_user, update_time, update_user
+        FROM t_user_app_module_relation
+        WHERE app_id=#{appId}
+    </select>
+
+    <select id="getAppsByUserId" resultMap="appMap">
+        SELECT DISTINCT a.app_id,a.app_name,a.app_number,a.app_desc,a.tenant_id,a.create_time,
+        a.create_user,a.update_time,a.update_user
+        FROM t_user_app a
+        WHERE a.app_id IN(
+            SELECT e.app_id
+            FROM t_user_info d
+            INNER JOIN t_user_user_role_relation b on d.user_id=b.user_id
+            INNER JOIN t_user_role_menu_relation c on b.role_id=c.role_id
+            INNER JOIN t_user_menu e on c.menu_id=e.menu_id
+            <where>
+                <if test="userId!=null and userId!=''">
+                    d.user_id=#{userId}
+                </if>
+            </where>
+            )
+        ORDER BY a.app_number ASC
+    </select>
+</mapper>

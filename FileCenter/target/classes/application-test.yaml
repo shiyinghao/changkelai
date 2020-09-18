@@ -81,3 +81,6 @@ servicecomb:
 obs:
   endPoint: obs.cn-north-1.myhuaweicloud.com
   bucketName: obs-wuliangye
+# 创意服务
+chuangyi:
+  serviceUrl: http://api.c0331.dev.guanyingyun.com/adapter/v1/custom

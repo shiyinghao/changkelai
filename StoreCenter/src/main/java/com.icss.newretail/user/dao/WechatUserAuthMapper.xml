@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.WechatUserAuthMapper">
+    <select id="getWechatUserAuthByOpenId" parameterType="hashmap" resultType="com.icss.newretail.model.WechatUserAuthDTO">
+    <![CDATA[
+        select a.auth_uuid, a.corp_id, a.open_id, a.auth_type, a.auth_account
+        from t_user_wechat_user_auth a
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.open_id = #{openId}
+             and a.auth_type = #{authType}
+        limit 1
+    ]]>
+    </select>
+    <select id="getWechatUserAuthListByOpenId" parameterType="hashmap" resultType="com.icss.newretail.model.WechatUserAuthDTO">
+        select a.auth_uuid, a.corp_id, a.open_id, a.auth_type, a.auth_account
+        from t_user_wechat_user_auth a
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.open_id = #{openId}
+            <if test="authTypes != null and authTypes != ''">
+                and a.auth_type in (${authTypes})
+            </if>
+        order by a.auth_type
+    </select>
+    <select id="checkAuthAnyOfUser" parameterType="hashmap" resultType="java.lang.Integer">
+        select count(1)
+        from t_user_wechat_user_auth a
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.open_id = #{openId}
+            <if test="authTypes != null and authTypes != ''">
+                and a.auth_type in (${authTypes})
+            </if>
+    </select>
+    <select id="getWechatUserAuthByAuthAccount" parameterType="hashmap" resultType="com.icss.newretail.model.WechatUserAuthDTO">
+    <![CDATA[
+        select a.auth_uuid, a.corp_id, a.open_id, a.auth_type, a.auth_account
+        from t_user_wechat_user_auth a
+        left join t_user_info b on a.auth_account = b.user_id
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.auth_account = #{authAccount}
+             and a.auth_type = #{authType}
+        limit 1
+    ]]>
+    </select>
+    <select id="getWechatUserAuthByAuthAccountOpenId" parameterType="hashmap" resultType="com.icss.newretail.model.WechatUserAuthDTO">
+    <![CDATA[
+        select a.auth_uuid, a.corp_id, a.open_id, a.auth_type, a.auth_account
+        from t_user_wechat_user_auth a
+        left join t_user_info b on a.auth_account = b.user_id
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.auth_account = #{authAccount} and a.open_id = #{openId}
+             and a.auth_type = #{authType}
+        limit 1
+    ]]>
+    </select>
+   <!-- <update id="updateWechatUserAuth" parameterType="com.icss.newretail.model.WechatUserAuthDTO">
+    <![CDATA[
+        update t_user_wechat_user_auth a set auth_account = #{authAccount}, update_time = #{updateTime}, update_user = #{updateUser}
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.open_id = #{openId}
+             and a.auth_type = #{authType}
+    ]]>
+    </update>-->
+   
+   <!-- <update id="updateWechatUserAuthStatus" parameterType="com.icss.newretail.model.WechatUserAuthDTO">
+    <![CDATA[
+        update t_user_wechat_user_auth a set status = #{status}, update_time = #{updateTime}, update_user = #{updateUser}
+        where 1=1 and a.status = 1 and a.tenant_id = #{tenantId} and a.open_id = #{openId}
+             and a.auth_type = #{authType}
+    ]]>
+    </update>-->
+    
+</mapper>

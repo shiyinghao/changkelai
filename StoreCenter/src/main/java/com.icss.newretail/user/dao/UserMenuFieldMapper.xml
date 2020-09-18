@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserMenuFieldMapper">
+
+    <select id="queryUserMenuFieldByParam" resultType="com.icss.newretail.model.UserMenuFieldDTO">
+        select distinct a.*, case when b.uuid is null then 0 else 1 end as isShow
+        from t_user_menu_field a
+        left join t_user_field_relation b on a.uuid = b.field_id and b.user_id = #{userId}
+        where a.menu_code = #{menuCode} and a.status = 1
+        order by a.sort_no
+    </select>
+    
+    <delete id="deleteUserFieldRelation" parameterType="com.icss.newretail.model.UserMenuFieldParamDTO">
+		delete b from t_user_field_relation b
+		left join t_user_menu_field a on a.uuid = b.field_id
+		where b.user_id = #{userId} and a.menu_code = #{menuCode}
+    </delete>
+    
+    <insert id="insertUserFieldRelation" parameterType="com.icss.newretail.model.UserMenuFieldDTO">
+		insert into t_user_field_relation (uuid, user_id, field_id, create_time)
+	    select #{relationId}, #{userId}, a.uuid, now()
+	    from t_user_menu_field a
+	    where a.menu_code = #{menuCode} and a.field_code = #{fieldCode}
+	    limit 1
+    </insert>
+</mapper>

@@ -1,0 +1,4 @@
+com\icss\newretail\api\file\PersonalTemplateApi.class
+com\icss\newretail\api\file\ShareAppletCodeApi.class
+com\icss\newretail\api\file\FileApi.class
+com\icss\newretail\api\file\HeartbeatApi.class

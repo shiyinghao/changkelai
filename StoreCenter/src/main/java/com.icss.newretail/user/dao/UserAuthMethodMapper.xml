@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserAuthMethodMapper">
+    <select id="queryUserByAccount" resultType="com.icss.newretail.user.entity.UserAuthMethod">
+        select uuid ,account,auth_method,user_id from t_user_auth_method where account = #{account}
+    </select>
+
+    <select id="queryUserType" resultType="com.icss.newretail.model.UserOrgRelationDTO">
+        select  * from t_user_org_relation where user_id=#{userId}
+    </select>
+</mapper>

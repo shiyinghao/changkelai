@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserOrganizationMapper">
+
+    <select id="getStoreOrgSeq" resultType="com.icss.newretail.model.OrganizationDTO">
+        SELECT
+        a.*
+        FROM
+        t_user_organization a
+        LEFT JOIN t_user_organization b ON b.org_seq = a.up_org_seq
+        LEFT JOIN t_user_organization c ON c.org_seq = b.up_org_seq
+        LEFT JOIN t_user_organization d ON d.org_seq = c.up_org_seq
+        LEFT JOIN t_user_store_info e ON a.org_seq = e.org_seq
+        WHERE
+        1=1
+        <if test="orgType=='1'.toString()">
+            and d.org_seq = #{orgSeq}
+        </if>
+        <if test="orgType=='2'.toString()">
+            and c.org_seq = #{orgSeq}
+        </if>
+        <if test="orgType=='3'.toString()">
+            and b.org_seq = #{orgSeq}
+        </if>
+        <if test="orgSeqZQName !=null and orgSeqZQName!=''">
+            AND c.org_name LIKE CONCAT('%', #{orgSeqZQName},'%')
+        </if>
+        <if test="orgSeqJDName !=null and orgSeqJDName!=''">
+            AND b.org_name LIKE CONCAT('%', #{orgSeqJDName},'%')
+        </if>
+        <if test="MDorgSeqName !=null and MDorgSeqName!=''">
+            AND a.org_name LIKE CONCAT('%', #{MDorgSeqName},'%')
+        </if>
+        <if test="authCode !=null and authCode!=''">
+            AND e.auth_code LIKE CONCAT('%', #{authCode},'%')
+        </if>
+
+    </select>
+    <select id="getStoreOrgInfoByList" resultType="com.icss.newretail.model.OrganizationDTO">
+        SELECT
+        a.*
+        FROM
+        t_user_organization a
+        LEFT JOIN t_user_organization b ON b.org_seq = a.up_org_seq
+        LEFT JOIN t_user_organization c ON c.org_seq = b.up_org_seq
+        WHERE
+        1=1
+        <if test="list!=null">
+            and c.org_seq in
+            <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+    </select>
+</mapper>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserReviewInfoMapper">
+
+    <select id="queryStoreInfo" resultType="com.icss.newretail.model.UserReviewInfoDTO">
+        SELECT * FROM t_user_review_info a
+        <where>
+            1=1
+            <if test="userReviewRequest.upOrgSeq!=null and userReviewRequest.upOrgSeq!=''">
+                AND a.up_org_seq =#{userReviewRequest.upOrgSeq}
+            </if>
+            <if test="userReviewRequest.storeName!=null and userReviewRequest.storeName!=''">
+                AND a.store_name LIKE CONCAT('%',#{userReviewRequest.storeName},'%')
+            </if>
+            <if test="userReviewRequest.storeType!=null and userReviewRequest.storeType!=''">
+                AND a.store_type=#{userReviewRequest.storeType}
+            </if>
+            <if test="userReviewRequest.reviewStatus!=null and userReviewRequest.reviewStatus!=''">
+                AND a.review_status=#{userReviewRequest.reviewStatus}
+            </if>
+            <if test="userReviewRequest.reviewType!=null and userReviewRequest.reviewType!=''">
+                AND a.review_type=#{userReviewRequest.reviewType}
+            </if>
+            <if test="userReviewRequest.storeOwnerName!=null and userReviewRequest.storeOwnerName!=''">
+                AND a.store_owner_name LIKE  CONCAT('%',#{userReviewRequest.storeOwnerName},'%')
+            </if>
+            <if test="userReviewRequest.storeManagerName!=null and userReviewRequest.storeManagerName!=''">
+                AND a.store_manager_name LIKE  CONCAT('%',#{userReviewRequest.storeManagerName},'%')
+            </if>
+            <if test="userReviewRequest.legalPerson!=null and userReviewRequest.legalPerson!=''">
+                AND a.legal_person LIKE  CONCAT('%',#{userReviewRequest.legalPerson},'%')
+            </if>
+            <if test="userReviewRequest.storeAddressDetail!=null and userReviewRequest.storeAddressDetail!=''">
+                AND a.store_address_detail LIKE  CONCAT('%',#{userReviewRequest.storeAddressDetail},'%')
+            </if>
+            <if test="userReviewRequest.phone!=null and userReviewRequest.phone!=''">
+                AND
+                (a.legal_person_phone = #{userReviewRequest.phone} or a.store_owner_phone = #{userReviewRequest.phone}
+                    or a.store_phone = #{userReviewRequest.phone}  or a.store_manager_name = #{userReviewRequest.phone})
+            </if>
+
+            <if test="userReviewRequest.beginTime!=null and userReviewRequest.beginTime!=''">
+                <![CDATA[ AND create_time >= str_to_date(#{userReviewRequest.beginTime}, '%Y-%m-%d %T') ]]>
+            </if>
+            <if test="userReviewRequest.endTime!=null and userReviewRequest.endTime!=''">
+                <![CDATA[ AND create_time <= str_to_date(#{userReviewRequest.endTime}, '%Y-%m-%d %T') ]]>
+            </if>
+            AND a.review_type !=3
+        </where>
+        ORDER BY a.create_time DESC
+    </select>
+    <select id="getSumNumber" resultType="java.lang.Integer">
+        select Max(number) number from t_user_review_info where auth_code=#{auth_code}
+    </select>
+    <select id="queryStoreInfoByJD" resultType="com.icss.newretail.model.UserReviewInfoDTO">
+        SELECT * FROM t_user_review_info a
+        <where>
+            1=1
+            <if test="baseCode!=null and baseCode!=''">
+                AND a.base_code =#{baseCode}
+            </if>
+            <if test="userReviewRequest.storeName!=null and userReviewRequest.storeName!=''">
+                AND a.store_name LIKE CONCAT('%',#{userReviewRequest.storeName},'%')
+            </if>
+            <if test="userReviewRequest.storeType!=null and userReviewRequest.storeType!=''">
+                AND a.store_type=#{userReviewRequest.storeType}
+            </if>
+            <if test="userReviewRequest.reviewStatus!=null and userReviewRequest.reviewStatus!=''">
+                AND a.review_status=#{userReviewRequest.reviewStatus}
+            </if>
+            <if test="userReviewRequest.reviewType!=null and userReviewRequest.reviewType!=''">
+                AND a.review_type=#{userReviewRequest.reviewType}
+            </if>
+            <if test="userReviewRequest.storeOwnerName!=null and userReviewRequest.storeOwnerName!=''">
+                AND a.store_owner_name LIKE  CONCAT('%',#{userReviewRequest.storeOwnerName},'%')
+            </if>
+            <if test="userReviewRequest.storeManagerName!=null and userReviewRequest.storeManagerName!=''">
+                AND a.store_manager_name LIKE  CONCAT('%',#{userReviewRequest.storeManagerName},'%')
+            </if>
+            <if test="userReviewRequest.legalPerson!=null and userReviewRequest.legalPerson!=''">
+                AND a.legal_person LIKE  CONCAT('%',#{userReviewRequest.legalPerson},'%')
+            </if>
+            <if test="userReviewRequest.storeAddressDetail!=null and userReviewRequest.storeAddressDetail!=''">
+                AND a.store_address_detail LIKE  CONCAT('%',#{userReviewRequest.storeAddressDetail},'%')
+            </if>
+            <if test="userReviewRequest.phone!=null and userReviewRequest.phone!=''">
+                AND
+                (a.legal_person_phone = #{userReviewRequest.phone} or a.store_owner_phone = #{userReviewRequest.phone}
+                or a.store_phone = #{userReviewRequest.phone}  or a.store_manager_name = #{userReviewRequest.phone})
+            </if>
+            <if test="userReviewRequest.beginTime!=null and userReviewRequest.beginTime!=''">
+                <![CDATA[ AND create_time >= str_to_date(#{userReviewRequest.beginTime}, '%Y-%m-%d %T') ]]>
+            </if>
+            <if test="userReviewRequest.endTime!=null and userReviewRequest.endTime!=''">
+                <![CDATA[ AND create_time <= str_to_date(#{userReviewRequest.endTime}, '%Y-%m-%d %T') ]]>
+            </if>
+        </where>
+            ORDER BY a.create_time DESC
+    </select>
+    <select id="queryStoreInfoByMD" resultType="com.icss.newretail.model.UserReviewInfoDTO">
+        SELECT * FROM t_user_review_info a
+        <where>
+            1=1
+            <if test="orgSeq!=null and orgSeq!=''">
+                AND a.org_seq =#{orgSeq}
+            </if>
+            <if test="userReviewRequest.storeName!=null and userReviewRequest.storeName!=''">
+                AND a.store_name LIKE CONCAT('%',#{userReviewRequest.storeName},'%')
+            </if>
+            <if test="userReviewRequest.storeType!=null and userReviewRequest.storeType!=''">
+                AND a.store_type=#{userReviewRequest.storeType}
+            </if>
+            <if test="userReviewRequest.reviewStatus!=null and userReviewRequest.reviewStatus!=''">
+                AND a.review_status=#{userReviewRequest.reviewStatus}
+            </if>
+            <if test="userReviewRequest.reviewType!=null and userReviewRequest.reviewType!=''">
+                AND a.review_type=#{userReviewRequest.reviewType}
+            </if>
+            <if test="userReviewRequest.storeOwnerName!=null and userReviewRequest.storeOwnerName!=''">
+                AND a.store_owner_name LIKE  CONCAT('%',#{userReviewRequest.storeOwnerName},'%')
+            </if>
+            <if test="userReviewRequest.storeManagerName!=null and userReviewRequest.storeManagerName!=''">
+                AND a.store_manager_name LIKE  CONCAT('%',#{userReviewRequest.storeManagerName},'%')
+            </if>
+            <if test="userReviewRequest.legalPerson!=null and userReviewRequest.legalPerson!=''">
+                AND a.legal_person LIKE  CONCAT('%',#{userReviewRequest.legalPerson},'%')
+            </if>
+            <if test="userReviewRequest.storeAddressDetail!=null and userReviewRequest.storeAddressDetail!=''">
+                AND a.store_address_detail LIKE  CONCAT('%',#{userReviewRequest.storeAddressDetail},'%')
+            </if>
+            <if test="userReviewRequest.phone!=null and userReviewRequest.phone!=''">
+                AND
+                (a.legal_person_phone = #{userReviewRequest.phone} or a.store_owner_phone = #{userReviewRequest.phone}
+                or a.store_phone = #{userReviewRequest.phone}  or a.store_manager_name = #{userReviewRequest.phone})
+            </if>
+            <if test="userReviewRequest.beginTime!=null and userReviewRequest.beginTime!=''">
+                <![CDATA[ AND create_time >= str_to_date(#{userReviewRequest.beginTime}, '%Y-%m-%d %T') ]]>
+            </if>
+            <if test="userReviewRequest.endTime!=null and userReviewRequest.endTime!=''">
+                <![CDATA[ AND create_time <= str_to_date(#{userReviewRequest.endTime}, '%Y-%m-%d %T') ]]>
+            </if>
+        </where>
+        ORDER BY a.create_time DESC
+    </select>
+</mapper>

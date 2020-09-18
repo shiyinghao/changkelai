@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.CodeChildMapper">
+
+    <select id="querycodeByName" resultType="com.icss.newretail.model.UserDictValueDTO" >
+        SELECT
+        a.uuid,a.`code`,a.`value`,a.dict_id,a.`status`
+        FROM
+        `t_user_dict_value` a
+        where 1=1 and a.status='1'
+        <if test="code.dictId != null and code.dictId != ''">
+            and  a.dict_id =#{code.dictId}
+        </if>
+        <if test="code.code != null and code.code != ''">
+            and  a.code =#{code.code}
+        </if>
+        <if test="code.value != null and code.value != ''">
+            and a.value like CONCAT('%',#{code.value},'%')
+        </if>
+    </select>
+
+    <update id="deleteCodeChild" parameterType="string">
+      update t_user_dict_value set status = 0 where uuid = #{uuid}
+    </update>
+
+</mapper>

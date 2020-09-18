@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserCardInfoMapper">
+
+
+
+
+    <update id="updateStoreCardConfig">
+        <if test="request.doorwayPic!=null and request.doorwayPic!=''">
+            update t_user_store_info set doorway_pic = #{request.doorwayPic}
+            where org_seq = #{request.orgSeq}
+        </if>
+        <if test="request.storeDesc!=null and request.storeDesc!=''">
+            update t_user_store_info set store_desc = #{request.storeDesc}
+            where org_seq = #{request.orgSeq}
+        </if>
+        <if test="request.cardId!=null and request.cardId!=''">
+            update t_user_store_info set card_id = #{request.cardId}
+            where org_seq = #{request.orgSeq}
+        </if>
+        <if test="request.userId!=null and request.userId!='' and request.headPicUrl!=null and request.headPicUrl!='' ">
+            update t_user_info set head_pic_url = #{request.headPicUrl}
+            where user_id = #{request.userId}
+        </if>
+    </update>
+
+    <update id="updateNewestActivityDownload">
+      update t_store_download_count set newest_activity_download = 0
+    </update>
+    <update id="updateStoredz">
+        update t_user_store_info set store_owner_pic = #{para.headPicUrl}
+            where org_seq = #{para.orgSeq}
+    </update>
+    <update id="updateStoreManager">
+         update t_user_store_info set store_manager_pic = #{para.headPicUrl}
+            where org_seq = #{para.orgSeq}
+    </update>
+
+
+    <select id="queryStoreCardConfig" resultType="com.icss.newretail.model.CardConfigDTO">
+        select
+            a.doorway_pic,
+            b.is_special,
+            a.store_desc,
+            b.card_name,
+            b.card_pic,
+            b.font_color,
+            b.background,
+            d.head_pic_url
+        from  t_user_store_info as a
+        left join t_user_card_info as b on a.card_id = b.uuid
+        LEFT JOIN t_user_org_relation c on a.org_seq=c.org_seq
+        LEFT JOIN t_user_info d on c.user_id = d.user_id
+        where a.org_seq = #{request.orgSeq} and d.user_id=#{request.userId}
+        LIMIT 1
+    </select>
+    <select id="queryStoreUsableCard" resultType="com.icss.newretail.model.StoreUsableCardDTO">
+         select
+          uuid,
+          card_name,
+          card_pic,
+          font_color,
+          background,
+          is_special,
+        case when
+          uuid=(SELECT IFNULL(card_id,0) from t_user_store_info where org_seq = #{orgSeq})
+        then 1
+        else 0
+        end
+        as checked
+        from t_user_card_info  where card_type=3 and status=1 and publish_status=1
+        order by sort asc
+    </select>
+
+    <select id="queryStoreInfo" resultType="com.icss.newretail.model.ServiceRecordDTO">
+        select  up_org_zone,base_name,auth_code,store_name from t_user_store_info where org_seq = #{orgSeq}
+    </select>
+
+    <select id="queryUserInfo" resultType="com.icss.newretail.model.ServiceRecordDTO">
+        select  a.user_type as user_type_name , b.real_name as user_name
+        from t_user_org_relation as a
+        left join  t_user_info as b on a.user_id = b.user_id
+        where a.org_seq = #{orgSeq} and a.user_id=#{userId}
+        order by a.user_type desc limit 1
+    </select>
+    <select id="queryUserType" resultType="com.icss.newretail.model.UserOrgRelationDTO">
+        SELECT * FROM `t_user_org_relation` a where a.user_id = #{userId}
+    </select>
+
+</mapper>

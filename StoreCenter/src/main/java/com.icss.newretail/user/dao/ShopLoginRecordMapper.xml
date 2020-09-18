@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.ShopLoginRecordMapper">
+
+    <select id="queryCount" resultType="com.icss.newretail.model.ActivationCountDTO">
+        SELECT COUNT(1) startTimes,SUM(stay_time) useTime,COUNT(DISTINCT user_id) userCount FROM t_user_shop_login_record
+        WHERE 1=1
+        <if test="beginDate!=null and beginDate !='' and endDate!=null and endDate !=''">
+        and DATE_FORMAT(login_time,'%Y-%m-%d') BETWEEN #{beginDate} AND #{endDate}
+        </if>
+    </select>
+</mapper>

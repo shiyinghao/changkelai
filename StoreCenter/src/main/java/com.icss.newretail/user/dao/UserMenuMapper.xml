@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.UserMenuMapper">
+
+    <resultMap id="resourceZtreeMap" type="com.icss.newretail.model.ResourceTree">
+        <id property="id" column="id"></id>
+        <collection property="children" column="{id=id,rId=rId}" select="getSonMenu">
+        </collection>
+    </resultMap>
+    <resultMap id="resourceZtreeBtnMap" type="com.icss.newretail.model.ResourceTree">
+        <id property="id" column="id"></id>
+        <id property="rId" column="rId"></id>
+        <collection property="children" column="{id=id,rId=rId}" select="getBtnMenu">
+        </collection>
+    </resultMap>
+
+    <resultMap id="menuMap" type="com.icss.newretail.model.MenuDTO">
+        <id property="menuId" column="menu_id"></id>
+        <collection property="children" column="menu_id" select="getMenuByUpId"></collection>
+    </resultMap>
+    
+    
+	<resultMap id="menuBtnMap" type="com.icss.newretail.model.MenuDTO">
+        <id property="menuId" column="menu_id"></id>
+        <collection property="children" column="menu_id" select="getMenuBtn">
+        </collection>
+    </resultMap>
+
+    <resultMap id="organtionMap" type="com.icss.newretail.model.OrganizationDTO">
+        <id property="orgSeq" column="org_seq"></id>
+        <collection property="children" column="org_seq" select="getOrganizationTree">
+        </collection>
+    </resultMap>
+    <resultMap id="organtionMapSub" type="com.icss.newretail.model.OrganizationDTO">
+    </resultMap>
+
+    <!--
+    <resultMap id="btnMenuMap" type="com.icss.newretail.model.MenuButtonDTO">
+        		<id property="uuid" column="uuid"/>
+				<result property="menuId" column="menu_Id"/>
+				<result property="btnName" column="btn_name"/>
+				<result property="btnCode" column="btn_code"/>
+			    <result property="status" column="status"/>
+			    <result property="createTime" column="create_time"/>
+			    <result property="createUser" column="create_user"/>
+			    <result property="updateTime" column="update_time"/>
+			    <result property="updateUser" column="update_user"/>
+    </resultMap>
+    -->
+    <update id="deleteMenu" parameterType="string">
+        UPDATE t_user_menu  SET status = -1 WHERE menu_id=#{menuId}
+    </update>
+    
+    <update id="enableOrDisablemenus">
+        UPDATE t_user_menu  SET status = #{status}  WHERE menu_id=#{menuId}
+    </update>
+
+    <select id="getAllMenus" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT
+        a.menu_id,a.app_id,a.app_module_relation_id,a.module_id,a.resource_req,a.resource_url,a.resource_name,a.resource_number,
+        a.resource_logo,a.resource_desc,a.resource_level,a.up_resource_req,a.is_default_display,a.is_base_menu,a.is_home_page,
+        a.is_privilege_control, a.status,a.create_user,a.create_time,a.update_user,a.update_time
+        FROM t_user_menu a
+        <where>
+            1 = 1
+            <if test="appId!=null and appId!=''">
+                AND a.app_id=#{appId}
+            </if>
+            <if test="roleId!=null and roleId!=''">
+                AND a.menu_id IN (SELECT b.menu_id FROM t_user_role_menu_relation b WHERE b.role_id=#{roleId})
+            </if>
+            AND status!=-1
+        </where>
+        ORDER BY a.resource_number ASC
+    </select>
+
+    <select id="queryMenus" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT menu_id,app_id,app_module_relation_id,module_id,resource_req,resource_url,resource_name,resource_number,
+        resource_logo,resource_desc,resource_level,up_resource_req,is_default_display,is_base_menu,is_home_page,is_privilege_control,
+        status,create_user,create_time,update_user,update_time,tenant_id
+        FROM t_user_menu
+        <where>
+            <if test="moduleId!=null and moduleId!=''">module_id=#{moduleId}</if>
+            <if test="upResourceReq!=null and upResourceReq!=''">AND up_resource_req=#{upResourceReq}</if>
+            <if test="resourceLevel!=null and resourceLevel!=''">AND resource_level=#{resourceLevel}</if>
+            AND status!=-1
+        </where>
+        ORDER BY resource_req ASC,resource_number ASC
+    </select>
+
+    <select id="getUserMenuByUserId" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT m.* FROM t_user_menu m,t_user_user_role_relation a,t_user_role_menu_relation b WHERE
+        m.menu_id = b.menu_id AND a.role_id =b.role_id AND a.user_id=#{userId}
+        AND a.status= 1 AND b.status= 1 AND m.status = 1
+        ORDER BY resource_number ASC
+    </select>
+
+    <select id="getUserMenuByMenuIds" parameterType="List" resultType="com.icss.newretail.user.entity.UserMenu">
+        SELECT * FROM t_user_menu WHERE menu_id in
+        <foreach collection="list" item="menuId" index="index" open="(" close=")" separator=",">
+            #{menuId}
+        </foreach>
+        ORDER BY resource_number ASC
+    </select>
+
+    <insert id="batchAddRoleMenuRelaction" parameterType="List">
+        INSERT INTO t_user_role_menu_relation
+        (role_id,menu_id,role_menu_relation,role_req,resource_id,status,create_user,create_time,update_user,update_time,comments,tenant_id)
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (#{item.roleId},#{item.menuId},#{item.roleMenuRelation},#{item.roleReq},#{item.resourceId},#{item.status},#{item.createUser},now(),#{item.updateUser},now(),#{item.comments},#{item.tenantId})
+        </foreach>
+    </insert>
+
+    <insert id="batchAddRoleMenuBtn" parameterType="List">
+        INSERT INTO t_user_role_btn
+        (uuid,role_id,btn_id,create_user,create_time,update_user,update_time)
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (#{item.uuid},#{item.roleId},#{item.btnId},#{item.createUser},now(),#{item.updateUser},now())
+        </foreach>
+    </insert>
+
+    <select id="getUserMenuByRoleId" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT m.* FROM t_user_menu m,t_user_role_menu_relation b WHERE m.menu_id = b.menu_id AND b.role_id =#{roleId} AND  b.status= 1 AND m.status = 1
+        ORDER BY m.resource_number ASC
+    </select>
+
+    <delete id="batchDelUserMenuByRodeIdAndMenuId">
+        DELETE FROM t_user_role_menu_relation WHERE role_id = #{roleId}
+    </delete>
+
+    <delete id="batchDelUserMenuBtnByRodeId">
+        DELETE FROM t_user_role_btn WHERE role_id = #{roleId}
+    </delete>
+
+    <select id="getUserMenus" parameterType="com.icss.newretail.model.UserMenuRequest"
+            resultType="com.icss.newretail.model.MenuDTO">
+        SELECT
+        a.menu_id,a.app_id,a.app_module_relation_id,a.module_id,a.resource_req,a.resource_url,a.resource_name,a.resource_number,
+        a.resource_logo,a.resource_desc,a.resource_level,a.up_resource_req,a.is_default_display,a.is_base_menu,a.is_home_page,a.is_privilege_control,
+        a.status,a.create_user,a.create_time,a.update_user,a.update_time
+        FROM t_user_menu a
+        WHERE a.menu_id IN (
+        SELECT distinct c.menu_id FROM t_user_info d
+        INNER JOIN t_user_user_role_relation b ON d.user_id = b.user_id
+        INNER JOIN t_user_role_menu_relation c ON b.role_id = c.role_id
+        WHERE d.user_id = #{userId} )
+        <if test="appId !=null and appId != ''">AND a.app_id = #{appId}</if>
+        <if test="moduleId !=null and moduleId != ''">AND a.module_id = #{moduleId}</if>
+        <if test="upResourceReq !=null and upResourceReq != ''">AND a.up_resource_req = #{upResourceReq}</if>
+        <if test="resourceLevel !=null and resourceLevel != ''">AND a.resource_level = #{resourceLevel}</if>
+        <if test="status!=null">AND a.status = #{status}</if>
+        <if test="status==null">AND a.status !=-1</if>
+        ORDER BY a.resource_req ASC,a.resource_number ASC
+    </select>
+
+    <select id="queryLatestResourceReq" resultType="string">
+        SELECT resource_req FROM t_user_menu WHERE resource_level=#{resourceLevel}
+        <if test="upResourceReq!=null and upResourceReq!=''">AND up_resource_req=#{upResourceReq}</if>
+        ORDER BY resource_req DESC limit 0,1
+    </select>
+
+    <select id="myMenuTracks" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT m.menu_id,m.app_id,m.app_module_relation_id,m.module_id,
+            m.resource_req,m.resource_url,m.resource_name,m.resource_number,
+            m.resource_logo,m.resource_desc,m.resource_level,m.up_resource_req,
+            m.is_default_display,m.is_base_menu,m.is_home_page,m.is_privilege_control,
+            m.status,m.create_user,m.create_time,m.update_user,m.update_time,m.tenant_id
+        FROM t_user_menu m,
+             t_user_user_role_relation a,
+             t_user_role_menu_relation b,
+             (SELECT MAX(operation_time) as operation_time,resoresource_id,operator,tenant_id
+                    from t_user_operator_log where operator =#{userId} and tenant_id =#{tenantId}
+                    GROUP BY resoresource_id) d
+        WHERE m.menu_id = b.menu_id AND a.role_id = b.role_id AND a.user_id = d.operator
+              AND a. STATUS = 1 AND b. STATUS = 1 AND m. STATUS = 1
+              AND m.menu_id = d.resoresource_id AND m.tenant_id = d.tenant_id
+              ORDER BY d.operation_time desc LIMIT 0,#{num}
+    </select>
+
+    <select id="queryMenusPageByMenuRequest" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT a.*
+        FROM t_user_menu a
+        LEFT JOIN t_user_menu b ON a.up_resource_req=b.resource_req
+        WHERE a.app_id=#{menuRequest.appId} AND a.module_id=#{menuRequest.moduleId} AND a.status !=-1
+        <if test="flag!=1">
+            <choose>
+                <when test="flag==2">
+                    AND a.up_resource_req = #{menuRequest.id}
+                </when>
+                <when test="flag==3">
+                    AND a.resource_req = #{menuRequest.id}
+                </when>
+            </choose>
+        </if>
+        ORDER BY a.resource_req ASC,a.resource_number ASC
+    </select>
+
+    <select id="queryMenuByMenuReq" resultType="com.icss.newretail.model.MenuDTO" parameterType="string">
+        SELECT menu_id,app_id,app_module_relation_id,module_id,resource_req,resource_url,resource_name,resource_number,
+        resource_logo,resource_desc,resource_level,up_resource_req,is_default_display,is_base_menu,is_home_page,is_privilege_control,
+        status,create_user,create_time,update_user,update_time,tenant_id
+        FROM t_user_menu
+        WHERE resource_req=#{id} ORDER BY resource_number ASC
+    </select>
+
+    <select id="queryMenusByMenuRequest" resultType="com.icss.newretail.model.MenuDTO"
+            parameterType="com.icss.newretail.model.MenuRequest">
+        SELECT menu_id,app_id,app_module_relation_id,module_id,resource_req,resource_url,resource_name,resource_number,
+        resource_logo,resource_desc,resource_level,up_resource_req,is_default_display,is_base_menu,is_home_page,is_privilege_control,
+        status,create_user,create_time,update_user,update_time,tenant_id
+        FROM t_user_menu
+        WHERE app_id=#{appId} AND module_id =#{moduleId} AND status = !=-1
+        ORDER BY resource_req ASC,resource_number ASC
+    </select>
+
+    <select id="queryMenuByMenuId" parameterType="string" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT menu_id,app_id,app_module_relation_id,module_id,resource_req,resource_url,resource_name,resource_number,
+        resource_logo,resource_desc,resource_level,up_resource_req,is_default_display,is_base_menu,is_home_page,is_privilege_control,
+        status,create_user,create_time,update_user,update_time,tenant_id
+        FROM t_user_menu
+        WHERE menu_id=#{uuid}  ORDER BY resource_number ASC
+    </select>
+
+    <select id="getAppModuleRelation" resultType="string">
+        SELECT app_module_relation_id FROM t_user_app_module_relation
+        WHERE app_id=#{appId} AND module_id=#{moduleId}
+    </select>
+
+    <!--<update id="modifyMenu" parameterType="com.icss.newretail.model.MenuDTO" >
+       UPDATE t_user_menu
+       <set>
+           <if test="appId!=null and appId!=''">app_id=#{appId},</if>
+           <if test="appModuleRelationId!=null and appModuleRelationId!=''">app_module_relation_id=#{appModuleRelationId},</if>
+           <if test="moduleId!=null and moduleId!=''">module_id=#{moduleId},</if>
+           <if test="resourceReq!=null and resourceReq!=''">resource_req=#{resourceReq},</if>
+           <if test="resourceUrl!=null and resourceUrl!=''">resource_url=#{resourceUrl},</if>
+           <if test="resourceName!=null and resourceName!=''">resource_name=#{resourceName},</if>
+           <if test="resourceNumber!=null">resource_number=#{resourceNumber},</if>
+           <if test="resourceLogo!=null and resourceLogo!=''">resource_logo=#{resourceLogo},</if>
+           <if test="resourceDesc!=null and resourceDesc!=''">resource_desc=#{resourceDesc},</if>
+           <if test="resourceLevel!=null">resource_level=#{resourceLevel},</if>
+           <if test="upResourceReq!=null and upResourceReq!=''">up_resource_req=#{upResourceReq},</if>
+           <if test="isDefaultDisplay!=null">is_default_display=#{isDefaultDisplay},</if>
+           <if test="isBaseMenu!=null">is_base_menu=#{isBaseMenu},</if>
+           <if test="isHomePage!=null">is_home_page=#{isHomePage},</if>
+           <if test="isPrivilegeControl!=null">is_privilege_control=#{isPrivilegeControl},</if>
+           <if test="status!=null">status=#{status},</if>
+           update_user=#{updateUser},
+           update_time=NOW()
+       </set>
+       WHERE menu_id=#{menuId}
+     </update>-->
+
+    <select id="getUpMenuByUserId" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT DISTINCT c.menu_id,c.resource_name,c.resource_url,c.resource_level,c.up_menu_id,c.resource_number
+        FROM
+        t_user_user_role_relation a
+        LEFT JOIN t_user_role_menu_relation b ON a.role_id = b.role_id
+        LEFT JOIN t_user_menu c ON b.menu_id = c.menu_id
+        WHERE a.status = 1 AND b.status = 1 AND c.status = 1
+        AND c.resource_level = 1 AND a.user_id = #{userId}
+        order by resource_number asc
+    </select>
+
+    <select id="getSonMenuByUserId" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT DISTINCT c.menu_id,c.resource_name,c.resource_url,c.resource_level,c.up_menu_id,c.resource_number
+        FROM
+        t_user_user_role_relation a
+        LEFT JOIN t_user_role_menu_relation b ON a.role_id = b.role_id
+        LEFT JOIN t_user_menu c ON b.menu_id = c.menu_id
+        WHERE a.status = 1 AND b.status = 1 AND c.status = 1
+        AND c.up_menu_id = #{upId} AND a.user_id = #{userId}
+        order by resource_number asc
+    </select>
+    
+	<select id="getBtnMenuByUserId" resultType="com.icss.newretail.model.MenuDTO">
+        SELECT DISTINCT c.uuid menu_id,c.btn_name resource_name,c.menu_id up_menu_id
+        FROM
+        t_user_user_role_relation a
+        LEFT JOIN t_user_role_btn b ON a.role_id = b.role_id
+        LEFT JOIN t_user_menu_btn c ON b.btn_id = c.uuid
+        WHERE a.status = 1 AND c.status = 1
+        AND c.menu_id = #{upId} AND a.user_id = #{userId}
+    </select>
+    
+    <select id="getResourceTree" resultMap="resourceZtreeMap">
+        select a.menu_id id,a.resource_name name,a.resource_level resourceLevel,a.up_menu_id pId, (case when b.role_menu_relation is null then false else true end) as checked,'${roleId}' as rId
+        from t_user_menu a
+        LEFT JOIN t_user_role_menu_relation b ON a.menu_id = b.menu_id AND b.status = 1 AND b.role_id = #{roleId}
+        where a.status = 1 and a.resource_level = 1 order by  a.resource_number,a.create_time asc
+    </select>
+
+    <select id="getSonMenu" resultMap="resourceZtreeBtnMap" parameterType="map">
+        select a.menu_id id,a.resource_name name,a.resource_level resourceLevel,a.up_menu_id pId, (case when b.role_menu_relation is null then false else true end) as checked,#{rId} as rId
+        from t_user_menu a
+        LEFT JOIN t_user_role_menu_relation b ON a.menu_id = b.menu_id AND b.status = 1 AND b.role_id = #{rId}
+        where a.status = 1  and a.up_menu_id = #{id}
+    </select>
+    
+	<select id="getBtnMenu" resultMap="resourceZtreeMap" parameterType="map">
+        select a.uuid id,a.btn_name name,a.menu_id pId, (case when b.uuid is null then false else true end) as checked,#{rId} as rId
+        from t_user_menu_btn  a
+        LEFT JOIN t_user_role_btn b ON a.uuid = b.btn_id AND b.role_id = #{rId}
+        where a.status = 1  and a.menu_id = #{id}
+    </select>
+    
+    <select id="getMenuTree" resultMap="menuMap">
+        select * from t_user_menu
+        where (status = 1 or status=0 ) and resource_level = 1
+        order by resource_number asc
+    </select>
+
+    <select id="getMenuByUpId" resultMap="menuBtnMap" parameterType="string">
+        select * from t_user_menu
+        where (status = 1 or status=0 ) and up_menu_id = #{menuId}
+        order by resource_number asc
+    </select>
+	<select id="getMenuBtn" resultMap="menuBtnMap" parameterType="string">
+	        select uuid menu_id,menu_id up_menu_id,btn_name resource_name, btn_code resourceReq, status from t_user_menu_btn
+	        where status = 1 and menu_id = #{menuId}
+	 </select>
+
+
+    <select id="getOrganizationTreeByOrgSeq" resultMap="organtionMap" resultType="com.icss.newretail.model.OrganizationDTO">
+            select * from t_user_organization where status = 1 and org_seq = #{orgSeq}
+    </select>
+    <select id="getOrganizationTree" resultMap="organtionMapSub">
+            select * from t_user_organization
+        where status = 1 and up_org_seq = #{orgSeq}
+        order by org_no asc
+    </select>
+</mapper>

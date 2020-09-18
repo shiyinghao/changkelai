@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.DeviceMapper">
+    <!--终端数设备查询(按照组织机构查询)-->
+    <select id="queryDevices" parameterType="string" resultType="com.icss.newretail.model.DeviceDTO">
+      SELECT DISTINCT  a.device_id, a.org_seq, a.device_store, a.device_number, a.device_type, a.device_name, a.device_desc, a.width,hight,
+        a.display_mode,a.multi_display, a.multi_display_num, a.multi_display_row_num, a.multi_display_column_num, a.content_type,
+        a.default_content,a.comments, a.status, a.create_user, a.create_time, a.update_user, a.update_time, a.tenant_id,
+        b.device_type_name,c.org_name
+      FROM  t_user_store_device a
+      LEFT JOIN t_user_device_type b ON a.device_type=b.device_type
+      LEFT JOIN t_user_organization c ON a.device_store=c.org_seq
+      WHERE a.status=1
+        <if test="deviceRequest.deviceType!=null and deviceRequest.deviceType!=''">
+          AND a.device_type = #{deviceRequest.deviceType}
+        </if>
+        <if test="deviceRequest.deviceName!=null and deviceRequest.deviceName!=''">
+          AND a.device_name LIKE CONCAT('%',#{deviceRequest.deviceName},'%')
+        </if>
+        <if test="deviceRequest.storeName!=null and deviceRequest.storeName!=''">
+          AND c.org_name LIKE CONCAT('%',#{deviceRequest.storeName},'%')
+        </if>
+    </select>
+
+    <!--终端数设备明细查询-->
+    <select id="queryDeviceById" parameterType="string" resultType="com.icss.newretail.model.DeviceDTO">
+        SELECT DISTINCT  a.device_id, a.org_seq, a.device_store, a.device_number, a.device_type, a.device_name, a.device_desc, a.width,hight,
+         a.display_mode,a.multi_display, a.multi_display_num, a.multi_display_row_num, a.multi_display_column_num, a.content_type,
+         a.default_content,a.comments, a.status, a.create_user, a.create_time, a.update_user, a.update_time, a.tenant_id,
+         b.device_type_name,c.org_name
+        FROM  t_user_store_device a
+        LEFT JOIN t_user_device_type b ON a.device_type=b.device_type
+        LEFT JOIN t_user_organization c ON a.device_store=c.org_seq
+        WHERE a.device_id=#{deviceId}
+    </select>
+
+    <!--<update id="modifyDevice" parameterType="com.icss.newretail.model.DeviceDTO">
+        UPDATE t_user_store_device
+        <set>
+            <if test="orgSeq!=null and orgSeq!=''">org_seq=#{orgSeq},</if>
+            <if test="deviceStore!=null and deviceStore!=''">device_store=#{deviceStore},</if>
+            <if test="deviceNumber!=null and deviceNumber!=''">device_number=#{deviceNumber},</if>
+            <if test="deviceType!=null and deviceType!=''">device_type=#{deviceType},</if>
+            <if test="deviceName!=null and deviceName!=''">device_name=#{deviceName},</if>
+            <if test="deviceDesc!=null and deviceDesc!=''">device_desc=#{deviceDesc},</if>
+            <if test="width!=null">width=#{width},</if>
+            <if test="hight!=null">hight=#{hight},</if>
+            <if test="displayMode!=null and displayMode!=''">display_mode=#{displayMode},</if>
+            <if test="multiDisplay!=null and multiDisplay!=''">multi_display=#{multiDisplay},</if>
+            <if test="multiDisplayNum!=null">multi_display_num=#{multiDisplayNum},</if>
+            <if test="multiDisplayRowNum!=null">multi_display_row_num=#{multiDisplayRowNum},</if>
+            <if test="multiDisplayColumnNum!=null">multi_display_column_num=#{multiDisplayColumnNum},</if>
+            <if test="contentType!=null and contentType!=null">contentType=#{contentType},</if>
+            <if test="defaultContent!=null and defaultContent!=''">default_content=#{defaultContent},</if>
+            <if test="comments!=null and comments!=''">comments= #{comments},</if>
+            <if test="status!=null">status=#{status},</if>
+            <if test="deviceNumber!=null">device_number=#{deviceNumber},</if>
+            <if test="createUser!=null">create_user=#{createUser},</if>
+            <if test="createTime!=null">create_time=#{createTime},</if>
+            update_user=#{updateUser},
+            update_time = NOW(),
+            <if test="tenantId!=null">tenant_id=#{tenantId}</if>
+        </set>
+        WHERE device_id=#{deviceId}
+    </update>
+-->
+    <!--终端设备删除-->
+    <delete id="deleteDevice" parameterType="string">
+        DELETE FROM t_user_store_device WHERE device_id=#{deviceId}
+    </delete>
+    
+    <select id="getDeviceByNum" resultType="com.icss.newretail.model.DeviceDTO">
+      SELECT DISTINCT  a.device_id, a.org_seq, a.device_store, a.device_number, a.device_type, a.device_name, a.device_desc, a.width,hight,
+         a.display_mode,a.multi_display, a.multi_display_num, a.multi_display_row_num, a.multi_display_column_num, a.content_type,
+         a.default_content,a.comments, a.status, a.create_user, a.create_time, a.update_user, a.update_time, a.tenant_id,
+         b.device_type_name,c.org_name
+      FROM  t_user_store_device a
+      LEFT JOIN t_user_device_type b ON a.device_type=b.device_type
+      LEFT JOIN t_user_organization c ON a.device_store=c.org_seq
+      WHERE a.device_number=#{deviceNum}  LIMIT 0,1
+    </select>
+    <select id="getPOSDeviceIdByStoreId" resultType="java.lang.String">
+      SELECT device_number FROM t_user_store_device WHERE org_seq =#{orgSeq} AND device_type='POS' AND status = 1
+    </select>
+    
+     <select id="getPOSDeviceIdByStoreIds" resultType="java.lang.String">
+      SELECT device_number FROM t_user_store_device WHERE  device_type='POS' AND status = 1
+      and org_seq in 
+       <foreach collection="list" item="orgSeq" index="index" open="(" close=")" separator=",">
+            #{orgSeq}
+        </foreach>
+    </select>
+
+    <!--<select id="getStoreDevicesByType" resultType="com.icss.newretail.model.DeviceDTO">
+      SELECT device_id, org_seq, device_store, device_number, device_type, device_name, device_desc, width,hight,
+        display_mode,multi_display, multi_display_num, multi_display_row_num, multi_display_column_num, content_type,
+        default_content,comments, status, create_user, create_time, update_user, update_time, tenant_id
+      FROM t_user_store_device WHERE org_seq =#{storeId} AND device_type=#{deviceType} AND tenant_id = #{tenantId} AND status = 1
+    </select>-->
+</mapper>
