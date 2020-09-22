@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.icss.newretail</groupId>
-    <artifactId>user-center</artifactId>
+    <artifactId>store-center</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -47,40 +47,18 @@
         <!-- 自定义接口 -->
         <dependency>
             <groupId>com.icss.newretail</groupId>
-            <artifactId>user-center-api-service</artifactId>
+            <artifactId>store-center-api-service</artifactId>
             <version>${newretail.version}</version>
         </dependency>
         <dependency>
             <groupId>com.icss.newretail</groupId>
-            <artifactId>user-center-api-endpoint</artifactId>
+            <artifactId>store-center-api-endpoint</artifactId>
             <version>${newretail.version}</version>
         </dependency>
         <dependency>
             <groupId>com.icss.newretail</groupId>
-            <artifactId>trade-center-api-service</artifactId>
+            <artifactId>filed-center-api-service</artifactId>
             <version>${newretail.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.icss.newretail</groupId>
-            <artifactId>member-center-api-service</artifactId>
-            <version>${newretail.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.icss.newretail</groupId>
-            <artifactId>file-center-api-service</artifactId>
-            <version>${newretail.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.icss.newretail</groupId>
-            <artifactId>goods-center-api-service</artifactId>
-            <version>${newretail.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.icss.newretail</groupId>
-            <artifactId>data-center-api-service</artifactId>
-            <version>${newretail.version}</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

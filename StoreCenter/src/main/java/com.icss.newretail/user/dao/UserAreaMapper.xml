@@ -32,19 +32,4 @@
         WHERE area_id=#{id}
     </select>
 
-    <select id="queryAreaInfos" resultType="com.icss.newretail.model.AreaInfoDTO">
-        SELECT area_id, area_seq, area_name, up_area_seq, create_time, create_user, update_time, update_user, tenant_id
-        FROM t_user_area
-        WHERE tenant_id = #{tenantId}
-        <if test="param.upAreaSeq != null and param.upAreaSeq != ''">
-            AND up_area_seq = #{param.upAreaSeq}
-        </if>
-        <if test="param.areaSeq != null and param.areaSeq != ''">
-            AND area_seq LIKE concat('%',#{param.areaSeq},'%')
-        </if>
-        <if test="param.areaName != null and param.areaName != ''">
-            AND area_name LIKE concat('%',#{param.areaName},'%')
-        </if>
-    </select>
-
 </mapper>

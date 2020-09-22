@@ -1,4 +1,0 @@
-#日常测试开发使用test dev ,生产环境打包使用prod
-spring:
-  profiles:
-    active: dev

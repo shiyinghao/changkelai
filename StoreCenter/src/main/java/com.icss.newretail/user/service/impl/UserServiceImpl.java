@@ -3,30 +3,60 @@ package com.icss.newretail.user.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.common.collect.Lists;
-import com.icss.newretail.model.*;
-import com.icss.newretail.service.data.DataService;
-import com.icss.newretail.service.member.MemberService;
-import com.icss.newretail.service.trade.TradeService;
+import com.icss.newretail.model.BaseDTO;
+import com.icss.newretail.model.MemberUserDTO;
+import com.icss.newretail.model.MenuDTO;
+import com.icss.newretail.model.OrgList;
+import com.icss.newretail.model.OrgReslutDTO;
+import com.icss.newretail.model.OrganizationDTO;
+import com.icss.newretail.model.OrganizationTypeDTO;
+import com.icss.newretail.model.PageData;
+import com.icss.newretail.model.ResponseBase;
+import com.icss.newretail.model.ResponseRecords;
+import com.icss.newretail.model.ResponseResult;
+import com.icss.newretail.model.ResponseResultPage;
+import com.icss.newretail.model.RoleDTO;
+import com.icss.newretail.model.RoleList;
+import com.icss.newretail.model.UserCustomizedParamDTO;
+import com.icss.newretail.model.UserInfoDTO;
+import com.icss.newretail.model.UserInfoParamDTO;
+import com.icss.newretail.model.UserMenuRequest;
+import com.icss.newretail.model.UserOrganizationInfoDTO;
+import com.icss.newretail.model.UserRequest;
+import com.icss.newretail.model.UserTypeDTO;
 import com.icss.newretail.service.user.UserService;
-import com.icss.newretail.user.dao.*;
-import com.icss.newretail.user.entity.*;
+import com.icss.newretail.user.dao.OrganizationMapper;
+import com.icss.newretail.user.dao.UserInfoMapper;
+import com.icss.newretail.user.dao.UserLoginInfoMapper;
+import com.icss.newretail.user.dao.UserMenuMapper;
+import com.icss.newretail.user.dao.UserOrgRelationMapper;
+import com.icss.newretail.user.dao.UserRoleMapper;
+import com.icss.newretail.user.dao.UserTypeMapper;
+import com.icss.newretail.user.dao.UserUserRoleRelationMapper;
+import com.icss.newretail.user.entity.UserInfo;
+import com.icss.newretail.user.entity.UserLoginInfo;
+import com.icss.newretail.user.entity.UserOrgRelation;
+import com.icss.newretail.user.entity.UserType;
+import com.icss.newretail.user.entity.UserUserRoleRelation;
 import com.icss.newretail.util.JwtTokenUtil;
 import com.icss.newretail.util.MD5Util;
 import com.icss.newretail.util.Object2ObjectUtil;
 import com.icss.newretail.util.ToolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.servicecomb.provider.pojo.RpcReference;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,15 +85,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserLoginInfoMapper userLoginInfoMapper;
-
-    @RpcReference(microserviceName = "member-service", schemaId = "MemberApi")
-    private MemberService memberService;
-
-    @RpcReference(microserviceName = "data-service", schemaId = "dataApi")
-    private DataService dataService;
-
-    @RpcReference(microserviceName = "trade-service", schemaId = "TradeApi")
-    private TradeService tradeService;
 
     @Override
     @Transactional
@@ -804,68 +825,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseRecords<UserInfoDTO> queryStorePerson(UserRequest userRequest) {
         ResponseRecords<UserInfoDTO> result = new ResponseRecords<>();
-        try {
-            List<UserInfoDTO> list = userInfoMapper.queryStorePerson(userRequest);
-            for (UserInfoDTO userInfoDTO : list) {
-                //遍历集合,取出门店orgSeq和userId ,查询门店下的某个人的拥有的会员数量
-                String userId = userInfoDTO.getUserId();
-                String orgSeq = userInfoDTO.getOrgSeq();
-
-                System.out.println("userId++++++" + userId);
-                MemAmtAndSerCountDTO memAmtAndSerCount = memberService.getMemAmtAndSerCount(userId, orgSeq);
-                //查询出会员数量和服务次数
-                userInfoDTO.setMemberAmount(memAmtAndSerCount.getMemberAmount());
-                userInfoDTO.setServiceCount(memAmtAndSerCount.getServiceCount());
-                //取出会员id集合,该店员下面所有会员消费金额
-                List<String> mList = memAmtAndSerCount.getMemberIdList();
-                BigDecimal totalMoney = BigDecimal.ZERO;
-                BigDecimal totalYearmoney = dataService.queryMemberAmountByUserId("", orgSeq, userId).getResult();
-                totalMoney = totalMoney.add(totalYearmoney);
-                BigDecimal todayMoney = tradeService.selectMoneyByMemAndOrg(userId, orgSeq, "");
-                totalMoney = totalMoney.add(todayMoney);
-                userInfoDTO.setTotalMoney(totalMoney);
-            }
-            result.setRecords(list);
-            result.setCode(1);
-            result.setMessage("门店查询完成，共有" + list.size() + "条数据");
-        } catch (Exception ex) {
-            result.setCode(0);
-            result.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|queryMananger->门店查询（根据orgSeq查出店主和店长）[" + ex.getMessage() + "]");
-        }
         return result;
     }
 
     @Override
     public ResponseRecords<UserInfoDTO> queryManage(UserRequest userRequest) {
         ResponseRecords<UserInfoDTO> result = new ResponseRecords<>();
-        try {
-            List<UserInfoDTO> list = userInfoMapper.queryManage(userRequest);
-            for (UserInfoDTO userInfoDTO : list) {
-                //遍历集合,取出门店orgSeq和userId ,查询门店下的某个人的拥有的会员数量
-                String userId = userInfoDTO.getUserId();
-                String orgSeq = userInfoDTO.getOrgSeq();
-
-                //查询出会员数量和服务次数
-                MemAmtAndSerCountDTO memAmtAndSerCount = memberService.getMemAmtAndSerCount(userId, orgSeq);
-                userInfoDTO.setMemberAmount(memAmtAndSerCount.getMemberAmount());
-                userInfoDTO.setServiceCount(memAmtAndSerCount.getServiceCount());
-
-                BigDecimal totalMoney = BigDecimal.ZERO;
-                BigDecimal totalYearmoney = dataService.queryMemberAmountByUserId("", orgSeq, "").getResult();
-                totalMoney = totalMoney.add(totalYearmoney);
-                BigDecimal todayMoney = tradeService.selectMoneyByMemAndOrg("", orgSeq, "");
-                totalMoney = totalMoney.add(todayMoney);
-                userInfoDTO.setTotalMoney(totalMoney);
-            }
-            result.setRecords(list);
-            result.setCode(1);
-            result.setMessage("门店查询完成，共有" + list.size() + "条数据");
-        } catch (Exception ex) {
-            result.setCode(0);
-            result.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|queryMananger->门店查询（根据orgSeq查出店主和店长）[" + ex.getMessage() + "]");
-        }
         return result;
     }
 

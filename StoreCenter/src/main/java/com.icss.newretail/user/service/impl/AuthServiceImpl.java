@@ -12,7 +12,6 @@ import com.icss.newretail.model.ResponseResult;
 import com.icss.newretail.model.RoleList;
 import com.icss.newretail.model.UmsParameter;
 import com.icss.newretail.service.user.AuthService;
-import com.icss.newretail.service.user.ForeignService;
 import com.icss.newretail.user.dao.LoginMapper;
 import com.icss.newretail.user.dao.StoreMapper;
 import com.icss.newretail.user.dao.UserInfoMapper;
@@ -55,9 +54,6 @@ public class AuthServiceImpl implements AuthService {
 
 	@Autowired
 	private UserLoginInfoMapper userLoginInfoMapper;
-
-	@Autowired
-	private ForeignService foreignService;
 
 	@Autowired
 	private StoreMapper storeMapper;
@@ -298,12 +294,12 @@ public class AuthServiceImpl implements AuthService {
 				// 发送验证码
 				String param = randomCode();
 				UmsParameter umsParameter = new UmsParameter().setParmA(param).setPhone(phone).setCode(CODE);
-				ResponseBase responseBase = foreignService.getUmsDto(umsParameter);
-				if (responseBase.getCode() == 0) {
-					responseResult.setCode(0).setMessage("验证码发送失败");
-				} else {
-					responseResult.setResult(param).setCode(1).setMessage("验证码发送成功");
-				}
+//				ResponseBase responseBase = foreignService.getUmsDto(umsParameter);
+//				if (responseBase.getCode() == 0) {
+//					responseResult.setCode(0).setMessage("验证码发送失败");
+//				} else {
+//					responseResult.setResult(param).setCode(1).setMessage("验证码发送成功");
+//				}
 			}
 		} catch (Exception e) {
 			responseResult.setCode(0).setMessage("系统异常");

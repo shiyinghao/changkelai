@@ -4,7 +4,6 @@ import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.icss.newretail.model.*;
 import com.icss.newretail.service.user.AuthMaService;
-import com.icss.newretail.service.user.WechatInfoService;
 import com.icss.newretail.user.dao.*;
 import com.icss.newretail.user.entity.*;
 import com.icss.newretail.util.JwtTokenUtil;
@@ -56,8 +55,6 @@ public class AuthMaServiceImpl implements AuthMaService {
 	@Autowired
 	private StoreUseRecordMapper storeUseRecordMapper;
 
-	@RpcReference(microserviceName = "user-service", schemaId = "wechatInfo")
-	private WechatInfoService wechatInfoService;
 
 
 	/**
@@ -112,80 +109,7 @@ public class AuthMaServiceImpl implements AuthMaService {
 	@Override
 	public ResponseResult<LoginMaDTO> loginShop(LoginMaRequest loginMaRequest) {
 		ResponseResult<LoginMaDTO> responseResult = new ResponseResult<LoginMaDTO>();
-		// 获取小程序信息
-		ResponseResult<WechatInfoDTO> wechatInfoDTOResult = wechatInfoService.getWechatInfoByState(loginMaRequest.getState());
-		WechatInfoDTO wechatInfoDTO = wechatInfoDTOResult.getResult();
-		String corpId = wechatInfoDTO.getCorpId();
-		String secret = wechatInfoDTO.getCorpSecret();
 
-		if (corpId != null && !"".equals(corpId)) {
-			// 获取openId
-			WxMaJscode2SessionResult wxMaJscode2SessionResult = null;
-//			try {
-//				wxMaJscode2SessionResult = MiniappConfig.getWxMaService(corpId, secret).getUserService().getSessionInfo(loginMaRequest.getCode());
-//			} catch (WxErrorException e) {
-//				e.printStackTrace();
-//			}
-			if (wxMaJscode2SessionResult != null) {
-				String openId = wxMaJscode2SessionResult.getOpenid();
-//                String unionId = wxMaJscode2SessionResult.getUnionid();
-//                String sessionKey = wxMaJscode2SessionResult.getSessionKey();
-				System.out.println("五粮液openId:" + openId);
-
-				try {
-					//根据openId,认证表中的获取对象
-					UserAuthMethod userAuthMethod = userAuthMethodMapper.queryUserByAccount(openId);
-					System.out.println("根据openId获取到店主userId>>>>" + userAuthMethod);
-					LoginMaDTO loginMaDTO = new LoginMaDTO();
-					if (userAuthMethod != null) {
-						String userId = userAuthMethod.getUserId();
-						ShopUserInfoDTO shopUserInfoDTO = userInfoMapper.queryUserInfo(userId);
-						loginMaDTO.setShopUserInfoDTO(shopUserInfoDTO);
-
-						//根据前端传入参数 userId 从 t_user_organization 表中查询出 user_type 集合
-						List<UserOrgRelationDTO> userTypeList = userAuthMethodMapper.queryUserType(userId);
-						List<UserStoreNameDTO> userStoreInfoList = userInfoMapper.queryStoreByUserId(userId);
-
-						// 生成JWT token
-						Map<String, Object> map = new HashMap<>();
-						map.put("openId", openId);
-						map.put("userId", userId);
-						String token = JwtTokenUtil.generateToken(map);
-
-						loginMaDTO.setUserId(userId);
-						loginMaDTO.setUserStoreInfoList(userStoreInfoList);
-						loginMaDTO.setUserTypeList(userTypeList);
-						loginMaDTO.setCorpId(corpId);
-						loginMaDTO.setOpenId(openId);
-						loginMaDTO.setToken(token);
-						System.out.println("token>>>>>>" + token);
-						loginMaDTO.setTokenExpTime(JwtTokenUtil.getExpirationDateFromToken(token));
-						loginMaDTO.setCurrLoginTime(JwtTokenUtil.getIssuedAtDateFromToken(token));
-						loginMaDTO.setStatus(1);
-						responseResult.setResult(loginMaDTO);
-
-					} else {
-						responseResult.setCode(1);
-						responseResult.setMessage("您尚未登录过五粮液");
-						loginMaDTO.setOpenId(openId);
-						loginMaDTO.setStatus(0);
-						responseResult.setResult(loginMaDTO);
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					log.error("查询openId 用户类型 店铺列表失败!");
-				}
-
-			} else {
-				responseResult.setCode(0);
-				responseResult.setMessage("小程序配置错误");
-			}
-
-		} else {
-			responseResult.setCode(0);
-			responseResult.setMessage("小程序配置错误");
-		}
 		return responseResult;
 	}
 

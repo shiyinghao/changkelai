@@ -1,6 +1,6 @@
 spring:
   application:
-    name: user-service
+    name: store-service
   main:
     web-application-type: none
     allow-bean-definition-overriding: true
@@ -65,7 +65,7 @@ servicecomb:
         watch: false
   # 对外发布的地址
   rest:
-    address: 0.0.0.0:9092
+    address: 0.0.0.0:9099
   # 线下开发，关闭监控数据上报
   monitor:
     client:

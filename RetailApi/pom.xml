@@ -72,8 +72,8 @@
   </dependencies>
   <modules>
     <module>common</module>
-    <module>user-center</module>
-    <module>file-center</module>
+    <module>store-center</module>
+    <module>filed-center</module>
   </modules>
   <build>
     <pluginManagement>
