@@ -10,7 +10,6 @@ import com.icss.newretail.util.JwtTokenUtil;
 import com.icss.newretail.util.MD5Util;
 import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.servicecomb.provider.pojo.RpcReference;
 import org.apache.servicecomb.swagger.invocation.context.ContextUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
