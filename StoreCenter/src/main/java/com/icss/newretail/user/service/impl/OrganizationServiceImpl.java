@@ -194,4 +194,29 @@ public class OrganizationServiceImpl implements OrganizationService {
         return base;
     }
 
+    @Override
+    public ResponseRecords<OrganizationDTO> getOrgTree() {
+        ResponseRecords<OrganizationDTO> responseResult = new ResponseRecords<>();
+        List<OrganizationDTO> upList = organizationMapper.getUpOrg();
+        for (OrganizationDTO upOrg : upList) {
+            upOrg.setChildren(getSonOrg(upOrg.getOrgSeq()));
+        }
+        responseResult.setCode(1);
+        responseResult.setMessage("获取成功!");
+        responseResult.setRecords(upList);
+        return responseResult;
+    }
+
+    public List<OrganizationDTO> getSonOrg(String orgSeq) {
+        List<OrganizationDTO> sonList = organizationMapper.getSonOrg(orgSeq);
+        for (OrganizationDTO dto : sonList) {
+//            if (dto.getLevel() != null && dto.getLevel() == 4) {
+//                continue;
+//            }
+            dto.setChildren(getSonOrg(dto.getOrgSeq()));
+        }
+        return sonList;
+    }
+
+
 }

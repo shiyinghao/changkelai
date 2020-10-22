@@ -2,4 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.newretail.user.dao.OrganizationMapper">
 
+	<select id="getUpOrg" resultType="com.icss.newretail.model.OrganizationDTO">
+		select * from t_user_organization
+		where status = 1 and level = 1
+		order by org_no,create_time
+	</select>
+
+	<select id="getSonOrg" resultType="com.icss.newretail.model.OrganizationDTO">
+		select * from t_user_organization
+		where status = 1 and up_org_seq = #{upOrgSeq}
+		order by org_no,create_time
+	</select>
+
 </mapper>

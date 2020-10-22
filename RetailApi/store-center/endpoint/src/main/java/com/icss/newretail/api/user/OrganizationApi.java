@@ -78,4 +78,14 @@ public class OrganizationApi {
         return organizationService.deleteOrganization(orgId);
     }
 
+    /**
+     * 获取组织机构树
+     *
+     * @return
+     */
+    @GetMapping(path = "getOrgTree")
+    public ResponseRecords<OrganizationDTO> getOrgTree() {
+        return organizationService.getOrgTree();
+    }
+
 }

@@ -12,4 +12,8 @@ import java.util.List;
 @Repository
 public interface OrganizationMapper extends BaseMapper<UserOrganization> {
 
+    List<OrganizationDTO> getUpOrg();
+
+    List<OrganizationDTO> getSonOrg(@Param("upOrgSeq") String upOrgSeq);
+
 }

@@ -39,4 +39,5 @@ public interface OrganizationService {
 
   public ResponseBase deleteOrganization(String orgId);
 
+  ResponseRecords<OrganizationDTO> getOrgTree();
 }
