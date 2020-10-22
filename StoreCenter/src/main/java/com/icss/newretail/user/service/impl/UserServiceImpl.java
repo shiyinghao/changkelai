@@ -31,7 +31,6 @@ import com.icss.newretail.user.dao.UserLoginInfoMapper;
 import com.icss.newretail.user.dao.UserMenuMapper;
 import com.icss.newretail.user.dao.UserOrgRelationMapper;
 import com.icss.newretail.user.dao.UserRoleMapper;
-import com.icss.newretail.user.dao.UserTypeMapper;
 import com.icss.newretail.user.dao.UserUserRoleRelationMapper;
 import com.icss.newretail.user.entity.UserInfo;
 import com.icss.newretail.user.entity.UserLoginInfo;

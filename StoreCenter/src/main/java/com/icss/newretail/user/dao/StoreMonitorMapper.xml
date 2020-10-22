@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.icss.newretail.user.dao.StoreMonitorMapper">
-	<insert id="insert" parameterType="com.icss.newretail.user.entity.StoreMonitor">
-    insert into t_user_store_monitor (uuid, org_seq, device_id, monitor_date, monitor_time, tenant_id )
-         values (#{uuid,jdbcType=INTEGER}, #{orgSeq,jdbcType=VARCHAR}, #{deviceId,jdbcType=VARCHAR}, 
-      			 #{monitorDate,jdbcType=VARCHAR}, #{monitorTime,jdbcType=TIMESTAMP}, #{tenantId,jdbcType=VARCHAR} )
-  </insert>
-</mapper>

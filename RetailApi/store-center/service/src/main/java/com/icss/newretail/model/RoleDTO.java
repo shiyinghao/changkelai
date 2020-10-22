@@ -4,6 +4,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class RoleDTO {
@@ -39,5 +40,8 @@ public class RoleDTO {
 
     @ApiModelProperty(value = "备注")
     private String comments;
+
+    @ApiModelProperty(value = "可分配的菜单menuIds")
+    private List<String> menuIds;
 
 }

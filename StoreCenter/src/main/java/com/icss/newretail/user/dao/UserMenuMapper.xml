@@ -34,19 +34,12 @@
     <resultMap id="organtionMapSub" type="com.icss.newretail.model.OrganizationDTO">
     </resultMap>
 
-    <!--
-    <resultMap id="btnMenuMap" type="com.icss.newretail.model.MenuButtonDTO">
-        		<id property="uuid" column="uuid"/>
-				<result property="menuId" column="menu_Id"/>
-				<result property="btnName" column="btn_name"/>
-				<result property="btnCode" column="btn_code"/>
-			    <result property="status" column="status"/>
-			    <result property="createTime" column="create_time"/>
-			    <result property="createUser" column="create_user"/>
-			    <result property="updateTime" column="update_time"/>
-			    <result property="updateUser" column="update_user"/>
-    </resultMap>
-    -->
+    <select id="getMenuTree" resultMap="menuMap">
+        select * from t_user_menu
+        where (status = 1 or status=0 ) and resource_level = 1
+        order by resource_number asc
+    </select>
+
     <update id="deleteMenu" parameterType="string">
         UPDATE t_user_menu  SET status = -1 WHERE menu_id=#{menuId}
     </update>
@@ -120,6 +113,14 @@
             (#{item.uuid},#{item.roleId},#{item.btnId},#{item.createUser},now(),#{item.updateUser},now())
         </foreach>
     </insert>
+    <insert id="addRoleMenuRelaction" parameterType="List">
+        INSERT INTO t_user_role_menu_distribution
+        (uuid,role_id,menu_id,role_req,resource_id,status,create_user,create_time,update_user,update_time,comments)
+        VALUES
+        <foreach collection="list" index="index" item="item" separator=",">
+            (#{item.uuid},#{item.roleId},#{item.menuId},#{item.roleReq},#{item.resourceId},#{item.status},#{item.createUser},now(),#{item.updateUser},now(),#{item.comments})
+        </foreach>
+    </insert>
 
     <select id="getUserMenuByRoleId" resultType="com.icss.newretail.model.MenuDTO">
         SELECT m.* FROM t_user_menu m,t_user_role_menu_relation b WHERE m.menu_id = b.menu_id AND b.role_id =#{roleId} AND  b.status= 1 AND m.status = 1
@@ -132,6 +133,9 @@
 
     <delete id="batchDelUserMenuBtnByRodeId">
         DELETE FROM t_user_role_btn WHERE role_id = #{roleId}
+    </delete>
+    <delete id="delUserMenuByRodeIdAndMenuId">
+         DELETE FROM t_user_role_menu_distribution WHERE role_id = #{roleId}
     </delete>
 
     <select id="getUserMenus" parameterType="com.icss.newretail.model.UserMenuRequest"
@@ -306,12 +310,6 @@
         where a.status = 1  and a.menu_id = #{id}
     </select>
     
-    <select id="getMenuTree" resultMap="menuMap">
-        select * from t_user_menu
-        where (status = 1 or status=0 ) and resource_level = 1
-        order by resource_number asc
-    </select>
-
     <select id="getMenuByUpId" resultMap="menuBtnMap" parameterType="string">
         select * from t_user_menu
         where (status = 1 or status=0 ) and up_menu_id = #{menuId}

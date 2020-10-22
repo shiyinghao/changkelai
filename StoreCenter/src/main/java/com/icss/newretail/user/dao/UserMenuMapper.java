@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.icss.newretail.model.*;
 import com.icss.newretail.user.entity.UserMenu;
 import com.icss.newretail.user.entity.UserRoleBtn;
+import com.icss.newretail.user.entity.UserRoleMenuDistribution;
 import com.icss.newretail.user.entity.UserRoleMenuRelation;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,9 @@ import java.util.List;
 
 @Repository
 public interface UserMenuMapper extends BaseMapper<UserMenu> {
+
+	List<MenuDTO> getMenuTree();
+
 	Integer deleteMenu(@Param("menuId") String menuId);
 	
 	Integer enableOrDisablemenus(@Param("menuId") String menuId, @Param("status") String status);
@@ -80,8 +84,6 @@ public interface UserMenuMapper extends BaseMapper<UserMenu> {
 
 	List<ResourceTree> getResourceTree(@Param("roleId") String roleId);
 
-	List<MenuDTO> getMenuTree();
-
 	int batchDelUserMenuBtnByRodeId(@Param("roleId") String roleId);
 
 	/**
@@ -97,4 +99,8 @@ public interface UserMenuMapper extends BaseMapper<UserMenu> {
 
 
 	List<OrganizationDTO> getOrganizationTreeByOrgSeq(@Param("orgSeq") String orgSeq);
+
+	int addRoleMenuRelaction(List<UserRoleMenuDistribution> roleMenuDistributions);
+
+	void delUserMenuByRodeIdAndMenuId(@Param("roleId") String roleId);
 }
