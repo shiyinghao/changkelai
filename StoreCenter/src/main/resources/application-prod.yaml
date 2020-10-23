@@ -11,7 +11,7 @@ spring:
   datasource:
     druid:
       driver-class-name: com.mysql.jdbc.Driver
-      url: jdbc:mysql://119.3.215.66:3306/nr_ckluser?useSSL=false
+      url: jdbc:mysql://49.4.7.120:3306/ai_portal?useSSL=false&useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
       username: root
       password: 'CloudBU@0316!'
       filters: stat,wall

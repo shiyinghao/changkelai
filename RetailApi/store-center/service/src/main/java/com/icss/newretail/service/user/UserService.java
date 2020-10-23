@@ -8,6 +8,15 @@ import java.util.Set;
 
 public interface UserService {
     // User ===================================================
+
+    /**
+     * 根据用户单位、岗位查询用户信息
+     *
+     * @param pageData
+     * @return
+     */
+    public ResponseResultPage<UserInfoDTO> queryUsers(PageData<UserRequest> pageData);
+
     public ResponseBase createUser(UserInfoDTO user);
 
     /**
@@ -19,11 +28,13 @@ public interface UserService {
      */
     public ResponseBase modifyUser(UserInfoDTO user);
 
+    public ResponseBase setUserRoles(String userId, List<String> roleCodes);
+
     public ResponseBase deleteUser(String userId);
 
     public ResponseBase changePassword(String userId, String oldPassword, String newPassword);
 
-    public ResponseBase setUserRoles(String userId, List<String> roleCodes);
+
 
     // Password ===================================================
     /**
@@ -46,13 +57,7 @@ public interface UserService {
      */
     public ResponseBase queryUserCustomizedParams(String userId);
 
-    /**
-     * 根据用户单位、岗位查询用户信息
-     * 
-     * @param pageData
-     * @return
-     */
-    public ResponseResultPage<UserInfoDTO> queryUsers(PageData<UserRequest> pageData);
+
 
     public ResponseRecords<RoleDTO> getUserRoles(String userId);
 

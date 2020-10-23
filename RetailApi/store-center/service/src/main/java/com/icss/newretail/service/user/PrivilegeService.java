@@ -32,6 +32,8 @@ public interface PrivilegeService {
     // Role ===================================================
     public ResponseRecords<RoleDTO> getAllRoles(String roleName, String roleType);
 
+    ResponseRecords<RoleDTO> getOtherRoles(String roleSort, String roleType);
+
     public ResponseBase createRole(RoleDTO role);
 
     public ResponseBase modifyRole(RoleDTO role);
@@ -94,4 +96,6 @@ public interface PrivilegeService {
     ResponseRecords<MenuDTO> getUserAllMenus();
 
     ResponseRecords<OrganizationDTO> getOrganizationTreeByOrgSeq(String orgSeq);
+
+
 }

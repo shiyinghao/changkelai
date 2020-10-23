@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.icss.newretail.user.dao.StoreMapper">
+
+    <resultMap id="storeMap" type="com.icss.newretail.model.OrganizationInfoDTO">
+        <id column="org_seq" property="orgSeq"></id>
+        <collection property="params" column="org_seq" select="queryStoreParams"
+                    ofType="com.icss.newretail.model.StoreParamDTO" javaType="java.util.List"></collection>
+    </resultMap>
+
+    <select id="queryStoreParams" parameterType="string" resultType="com.icss.newretail.model.StoreParamDTO">
+        SELECT param_id, param_type, param_value, org_seq, tenant_id, param_type_value_id,create_time, create_user, update_time, update_user
+        FROM t_user_store_param
+        WHERE org_seq=#{orgSeq}
+    </select>
+
+    <select id="queryStores" parameterType="com.icss.newretail.model.StoreRequest" resultMap="storeMap">
+        SELECT DISTINCT a.org_seq,a.company_name,a.company_address,a.company_tel,a.company_type,
+        a.area_seq,a.company_desc,a.status,a.longitude,a.lat,a.logo_url,a.is_chain,a.tenant_id,
+        b.org_name,b.up_org_seq,b.org_type,b.area_id,c.area_name,b.org_no,a.create_user,a.create_time,
+        a.update_user,a.update_time,e.min_money,e.delivery_rangle,e.delivery_money,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.lat*PI()/180)/2),2)+
+        COS(#{request.lat}*PI()/180)*COS(a.lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.longitude*PI()/180)/2),2)))*1000
+        )AS juli
+        FROM t_user_organization_info a
+        LEFT JOIN t_user_organization b ON a.org_seq=b.org_seq
+        LEFT JOIN t_user_area c ON b.area_id=c.area_id
+        LEFT JOIN t_user_store_info e ON a.org_seq=e.org_seq
+        <if test="request.orderType==1 or request.orderType==2">
+            LEFT JOIN t_user_store_tag d ON a.org_seq=d.org_seq
+            WHERE d.store_tag_type='RCMD'
+            <if test="request.areaSeq!=null and request.areaSeq!=''">
+                AND a.area_seq=#{request.areaSeq}
+            </if>
+            AND a.tenant_id = #{tenantId}
+            ORDER BY store_tag_value DESC
+            <if test="orderType==2">
+                ,juli ASC
+            </if>
+        </if>
+        <if test="orderType==0">
+            WHERE #{request.circle}>= ROUND(6378.138 * 2 *
+            ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.lat*PI()/180)/2),2)+
+            COS(#{request.lat}*PI()/180)*COS(a.lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.longitude*PI()/180)/2),2)))*1000
+            )
+            <if test="request.areaSeq!=null and request.areaSeq!=''">
+                AND a.area_seq=#{request.areaSeq}
+            </if>
+            AND a.tenant_id = #{tenantId}
+            ORDER BY juli ASC
+        </if>
+        LIMIT 0,#{limit}
+    </select>
+
+    <!--获取门店信息-->
+    <select id="queryStoreById" parameterType="com.icss.newretail.model.StoreMessage"
+            resultType="com.icss.newretail.model.UserStoreInfoDTO">
+        SELECT
+        a.uuid,a.org_seq,a.store_type,a.store_name,a.manager_area,a.building_area,a.practical_area,a.leasehold_area,a.warehouse_area,
+        a.open_status,a.open_time,a.province,a.city,a.business_district_type,a.store_owner_name,a.store_owner_phone,a.store_phone,
+        a.store_owner_grade,a.store_address,a.store_address_detail,a.doorway_pic,a.store_lat,a.store_lng,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.store_lat*PI()/180)/2),2)+
+        COS(#{request.lat}*PI()/180)*COS(a.store_lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.store_lng*PI()/180)/2),2)))*1000
+        )AS juli
+        FROM
+        t_user_store_info a
+        where 1=1
+        <if test="request.storeName!=null and request.storeName!=''">
+            and a.store_name LIKE CONCAT('%',#{request.storeName},'%')
+        </if>
+        order by juli asc
+        LIMIT 0,#{limit}
+    </select>
+
+    <select id="queryOftenStores" resultType="com.icss.newretail.model.UserStoreInfoDTO">
+        SELECT org_seq,store_name,store_address,open_time,store_lng,store_lat,open_begin_time,open_end_time,store_address_detail,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.store_lat*PI()/180)/2),2)+
+        COS(#{request.lat}*PI()/180)*COS(a.store_lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.store_lng*PI()/180)/2),2)))*1000
+        )AS juli
+        from t_user_store_info a
+        where 1=1
+        <if test="list != null and list.size()!=0">
+            and org_seq IN
+            <foreach collection="list" item="orgSeq" index="index" open="(" close=")" separator=",">
+                #{orgSeq}
+            </foreach>
+        </if>
+        <if test="request.storeName!=null and request.storeName!=''">
+            and (a.store_name LIKE CONCAT('%',#{request.storeName},'%')
+            or a.store_address_detail LIKE CONCAT('%',#{request.storeName},'%'))
+        </if>
+        ORDER BY juli asc
+    </select>
+
+    <select id="queryStored" parameterType="com.icss.newretail.model.StoreMessage"
+            resultType="com.icss.newretail.model.UserStoreInfoDTO">
+       SELECT DISTINCT
+        a.uuid,a.org_seq,a.store_type,a.store_name,a.manager_area,a.building_area,a.practical_area,a.leasehold_area,a.warehouse_area,
+        a.open_status,a.open_time,a.province,a.city,a.business_district_type,a.store_owner_name,a.store_owner_phone,a.store_phone,
+        a.store_owner_grade,a.store_address,a.store_address_detail,a.doorway_pic,a.store_lat,a.store_lng,a.open_begin_time,a.open_end_time,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.store_lat*PI()/180)/2),2)+
+                COS(#{request.lat}*PI()/180)*COS(a.store_lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.store_lng*PI()/180)/2),2)))*1000
+                )AS juli
+        FROM
+            t_user_store_info a
+        where 1=1 and a.status =1
+        <if test="request.storeName!=null and request.storeName!=''">
+            and (a.store_name LIKE CONCAT('%',#{request.storeName},'%')
+            or a.store_address_detail LIKE CONCAT('%',#{request.storeName},'%'))
+        </if>
+        <if test="request.province !=null and request.province!=''">
+            and a.province like  CONCAT(#{request.province},'%')
+        </if>
+        <if test="request.city !=null and request.city!=''">
+            and a.city like CONCAT(#{request.city},'%')
+        </if>
+        ORDER BY juli asc
+    </select>
+
+    <select id="queryStoreByAreaSeq" resultMap="storeMap">
+        SELECT DISTINCT a.org_seq,a.company_name,a.company_address,a.company_tel,a.company_type,
+        a.area_seq,a.company_desc,a.status,a.longitude,a.lat,a.logo_url,a.is_chain,a.tenant_id,
+        b.org_name,b.up_org_seq,b.org_type,b.area_id,c.area_name,b.org_no,a.create_user,a.create_time,
+        a.update_user,a.update_time
+        FROM t_user_organization_info a
+        LEFT join t_user_organization b ON a.org_seq=b.org_seq
+        LEFT join t_user_area c ON b.area_id=c.area_id
+        WHERE a.area_seq=#{condition.areaSeq} AND a.tenant_id = #{tenantId}
+    </select>
+
+    <select id="getRecoStore" resultMap="storeMap">
+        SELECT a.org_seq,a.company_name,a.company_address,a.company_tel,a.company_type,
+        a.area_seq,a.company_desc,a.status,a.longitude,a.lat,a.logo_url,a.is_chain,a.tenant_id,
+        b.org_name,b.up_org_seq,b.org_type,b.area_id,c.area_name,b.org_no,a.create_user,a.create_time,
+        a.update_user,a.update_time,e.min_money,e.delivery_rangle,e.delivery_money,
+        ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{lat}*PI()/180-a.lat*PI()/180)/2),2)+
+        COS(#{lat}*PI()/180)*COS(a.lat*PI()/180)*POW(SIN((#{lng}*PI()/180-a.longitude*PI()/180)/2),2)))*1000
+        )AS juli
+        FROM t_user_organization_info a
+        LEFT JOIN t_user_organization b ON a.org_seq=b.org_seq
+        LEFT JOIN t_user_area c ON b.area_id=c.area_id
+        LEFT JOIN t_user_store_tag d ON a.org_seq=d.org_seq
+        LEFT JOIN t_user_store_info e ON a.org_seq=e.org_seq
+        WHERE d.store_tag_type='RCMD' AND  a.tenant_id=#{tenantId}
+        ORDER BY store_tag_value DESC,juli ASC
+        limit 0,1
+    </select>
+
+    <select id="queryStoreInfo" resultType="com.icss.newretail.model.StoreInfoDTO">
+        SELECT
+        d.*, a.org_seq AS zqOrgSeq,
+        a.org_name AS zqOrgName
+        FROM
+        t_user_organization a
+        LEFT JOIN t_user_organization b on a.org_seq=b.up_org_seq
+        LEFT JOIN t_user_organization c ON b.org_seq = c.up_org_seq
+        LEFT JOIN t_user_store_info d ON c.org_seq = d.org_seq
+        WHERE
+        1 = 1
+        AND a.`status` = 1
+        <if test="storeInfoRequest.zqOrgSeq !=null and storeInfoRequest.zqOrgSeq!=''">
+            and a.org_seq in
+            <foreach collection="zqlist" index="index" item="zqOrgSeq" separator="," open="(" close=")">
+                #{zqOrgSeq}
+            </foreach>
+        </if>
+        <if test="storeInfoRequest.storeName!=null and storeInfoRequest.storeName!=''">
+            and d.store_name LIKE CONCAT('%',#{storeInfoRequest.storeName},'%')
+        </if>
+        <if test="storeInfoRequest.gradelevelId !=null and storeInfoRequest.gradelevelId!=''">
+            <if test="list!=null ">
+                and  d.gradelevel_id  in
+                <foreach collection="list" index="index" item="gradelevelId" separator="," open="(" close=")">
+                    #{gradelevelId}
+                </foreach>
+            </if>
+        </if>
+    </select>
+    <select id="getStoresByUpOrgSeq" resultType="com.icss.newretail.model.StoreInfoDTO">
+      SELECT  a.org_seq, a.opening_time, a.store_type, a.town_country_type, a.fringe_trading_area_type, a.min_money,
+        a.delivery_rangle,a.delivery_money, a.store_score, a.price_tag_address, a.free_deliveryl_money, a.create_time,
+        a.create_user, a.update_time,a.update_user,a.domain,a.tenant_id,b.up_org_seq,b.org_name
+      FROM t_user_store_info a
+      LEFT JOIN t_user_organization b ON a.org_seq=b.org_seq
+      LEFT JOIN t_user_organization_info c ON a.org_seq=c.org_seq
+      WHERE b.up_org_seq = #{upOrgSeq} AND c.is_chain =1
+    </select>
+
+    <select id="getStoreInfoByOrgSeq" resultType="com.icss.newretail.model.StoreInfoDTO">
+        SELECT a.org_seq, a.opening_time, a.min_money, a.delivery_rangle, a.delivery_money, a.store_score,  a.free_deliveryl_money,
+        b.org_name,c.company_tel,c.longitude,c.lat
+        FROM nr_user.t_user_store_info a
+        LEFT JOIN nr_user.t_user_organization b on b.org_seq = a.org_seq
+        LEFT JOIN nr_user.t_user_organization_info c on c.org_seq = a.org_seq
+        WHERE  a.org_seq = #{orgSeq}
+    </select>
+
+    <select id="getStoresByUserId" resultType="com.icss.newretail.model.StoreInfoDTO">
+        SELECT a.org_seq,b.org_name
+        FROM t_user_store_info a
+        LEFT JOIN t_user_organization b ON a.org_seq=b.org_seq
+        where a.org_sql like concat((
+          SELECT org_seq FROM t_user_info WHERE user_id = #{userId} AND tenant_id = #{tenantId}),'%')
+    </select>
+    <select id="queryStoreByLngAndlat" resultType="com.icss.newretail.user.entity.UserStoreInfo">
+        SELECT DISTINCT
+            a.uuid,a.org_seq,a.auth_code,a.store_name, a.business_license,a.store_type,a.manager_area,a.building_area,a.practical_area,
+            a.leasehold_area,a.warehouse_area, a.open_status,a.open_time,a.open_date, a.province,a.city,a.store_phone,a.store_owner_grade,a.store_address,a.store_address_detail,
+            a.doorway_pic,store_lng,store_lat,a.open_begin_time,a.open_end_time,
+            ROUND(6378.138 * 2 * ASIN(SQRT(POW(SIN((#{request.lat}*PI()/180-a.store_lat*PI()/180)/2),2)+
+                COS(#{request.lat}*PI()/180)*COS(a.store_lat*PI()/180)*POW(SIN((#{request.lng}*PI()/180-a.store_lng*PI()/180)/2),2)))*1000
+                )
+                AS juli
+        FROM
+            t_user_store_info a order by juli asc
+            limit 1
+    </select>
+    <select id="queryfootPrint" resultType="com.icss.newretail.model.RecommendStoreDTO">
+          select org_seq,store_name,store_address,open_time,store_lng,store_lat,open_begin_time,open_end_time,store_address_detail
+          from t_user_store_info
+          where 1=1
+        <if test="list != null and list.size()!=0">
+        and org_seq IN
+          <foreach collection="list" item="orgSeq" index="index" open="(" close=")" separator=",">
+              #{orgSeq}
+          </foreach>
+        </if>
+    </select>
+
+    <select id="queryStoreNameById" resultType="com.icss.newretail.model.StoreInfoDTO">
+        SELECT
+            a.store_name,a.org_seq,store_type,a.open_status
+        FROM
+            t_user_store_info a
+        where a.org_seq =#{orgSeq} and a.status='1'
+    </select>
+    <select id="searchStore" resultType="com.icss.newretail.model.RecommendStoreDTO">
+        select org_seq,store_name,store_address,open_time,store_lng,store_lat
+        from t_user_store_info
+        where 1=1
+        <if test="list != null and list.size()!=0">
+            and org_seq IN
+            <foreach collection="list" item="orgSeq" index="index" open="(" close=")" separator=",">
+                #{orgSeq}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

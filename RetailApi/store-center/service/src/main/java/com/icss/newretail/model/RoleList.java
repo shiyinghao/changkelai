@@ -13,4 +13,6 @@ public class RoleList {
     @ApiModelProperty(value = "用户ID")
     private String roleName; // 用户ID
 
+    private Integer roleSort;
+
 }

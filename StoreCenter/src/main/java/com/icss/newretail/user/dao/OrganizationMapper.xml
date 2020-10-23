@@ -14,4 +14,37 @@
 		order by org_no,create_time
 	</select>
 
+	<select id="queryCount" resultType="java.lang.Integer">
+		SELECT COUNT(*)  FROM   t_user_org_relation  AS a  LEFT JOIN 	t_user_info  AS b  ON  a.user_id = b.user_id
+	WHERE a.org_seq = #{orgSeq}  AND a.status=1 AND b.status    AND a.user_type = #{userType}
+	</select>
+
+	<select id="getUserOrgType" resultType="com.icss.newretail.model.OrganizationTypeDTO">
+		select org_type,org_type_name,org_type,description,create_time,create_user,
+		update_time,update_user
+		from t_user_org_type
+		where 1=1
+		<if test="orgType!=null and orgType!=''">
+			AND org_type=#{orgType}
+		</if>
+		<if test="orgTypeName!=null and orgTypeName!=''">
+			AND org_type_name LIKE CONCAT('%',#{orgTypeName},'%')
+		</if>
+	</select>
+
+	<select id="queryStoreOrgseq" resultType="com.icss.newretail.model.OrgReslutDTO">
+		select distinct e.org_seq,e.org_name,e.level,e.area_id,e.org_type,e.area_id,e.status,e.org_no
+				from t_user_organization a
+   				 inner join t_user_organization b on a.org_seq=b.up_org_seq or a.org_seq=b.org_seq
+   				 inner join t_user_organization c on b.org_seq=c.up_org_seq or b.org_seq=c.org_seq
+   				 inner join t_user_organization d on c.org_seq=d.up_org_seq or c.org_seq=d.org_seq
+   				 inner join t_user_organization e on d.org_seq=e.up_org_seq or d.org_seq=e.org_seq
+			where a.org_seq= #{orgSeq}
+	</select>
+
+	<select id="getOrgSeqType" resultType="com.icss.newretail.model.OrganizationDTO">
+		select * from t_user_organization where org_seq=#{orgSeq}
+	</select>
+
+
 </mapper>

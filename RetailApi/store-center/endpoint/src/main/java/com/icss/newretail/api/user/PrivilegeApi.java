@@ -111,6 +111,17 @@ public class PrivilegeApi {
 		return privilegeService.getAllRoles(roleName, roleType);
 	}
 
+
+	/**
+	 * 获取当前角色下的其他角色
+	 *
+	 * @return
+	 */
+	@PostMapping(path = "getOtherRoles")
+	public ResponseRecords<RoleDTO> getOtherRoles(@RequestParam(name = "roleSort", required = true) String roleSort, @RequestParam(name = "roleType", required = false) String roleType) {
+		return privilegeService.getOtherRoles(roleSort, roleType);
+	}
+
 	/**
 	 * 添加角色
 	 *

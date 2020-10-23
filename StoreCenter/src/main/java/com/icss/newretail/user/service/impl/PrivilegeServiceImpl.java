@@ -191,6 +191,23 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         return result;
     }
 
+    @Override
+    public ResponseRecords<RoleDTO> getOtherRoles(String roleSort, String roleType) {
+        ResponseRecords<RoleDTO> result = new ResponseRecords<>();
+        try {
+            List<RoleDTO> roleDTOList = userRoleMapper.getOtherRoles(roleSort, roleType);
+            result.setCode(1);
+            result.setMessage("共有" + roleDTOList.size() + "条角色信息");
+            result.setRecords(roleDTOList);
+        } catch (Exception ex) {
+            result.setCode(0);
+            log.error("PrivilegeServiceImpl|getAllRoles->获取所有角色:" + ex.getMessage());
+            result.setMessage(ex.getMessage());
+            result.setRecords(new ArrayList<>());
+        }
+        return result;
+    }
+
     /**
      * 添加角色
      *
@@ -212,27 +229,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             userRole.setCreateUser(JwtTokenUtil.currUser());
             userRole.setUpdateUser(JwtTokenUtil.currUser());
             int count = userRoleMapper.insert(userRole);
-            if (ToolUtil.notEmpty(role.getMenuIds())) {
-                List<UserMenu> userMenus = userMenuMapper.getUserMenuByMenuIds(role.getMenuIds());
-                if (userMenus == null || userMenus.size() <= 0) {
-                    throw new RuntimeException("未查询到对应菜单信息");
-                }
-                List<UserRoleMenuDistribution> roleMenuDistributions = new ArrayList<>();
-                for (UserMenu userMenu : userMenus) {
-                    UserRoleMenuDistribution roleMenuRelation = new UserRoleMenuDistribution();
-                    roleMenuRelation.setUuid(UUID.randomUUID().toString());
-                    roleMenuRelation.setMenuId(userMenu.getMenuId());
-                    roleMenuRelation.setRoleId(roleId);
-                    roleMenuRelation.setRoleReq(roleSeq);
-                    roleMenuRelation.setStatus(1);
-                    roleMenuRelation.setCreateUser(JwtTokenUtil.currUser());
-                    roleMenuRelation.setUpdateUser(JwtTokenUtil.currUser());
-                    roleMenuRelation.setCreateTime(LocalDateTime.now());
-                    roleMenuRelation.setUpdateTime(LocalDateTime.now());
-                    roleMenuDistributions.add(roleMenuRelation);
-                }
-                int res = userMenuMapper.addRoleMenuRelaction(roleMenuDistributions);
-            }
             if (count > 0) {
                 base.setCode(1);
                 base.setMessage("用户角色添加成功");
@@ -265,28 +261,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             RoleDTO userRoled = userRoleMapper.getUserRoleByRoleId(role.getRoleId());
             if (userRoled == null) {
                 throw new RuntimeException("角色不存在");
-            }
-            if (ToolUtil.notEmpty(role.getMenuIds())) {
-                List<UserMenu> userMenus = userMenuMapper.getUserMenuByMenuIds(role.getMenuIds());
-                if (userMenus == null || userMenus.size() <= 0) {
-                    throw new RuntimeException("未查询到对应菜单信息");
-                }
-                List<UserRoleMenuDistribution> roleMenuDistributions = new ArrayList<>();
-                for (UserMenu userMenu : userMenus) {
-                    UserRoleMenuDistribution roleMenuRelation = new UserRoleMenuDistribution();
-                    roleMenuRelation.setUuid(UUID.randomUUID().toString());
-                    roleMenuRelation.setMenuId(userMenu.getMenuId());
-                    roleMenuRelation.setRoleId(userRoled.getRoleId());
-                    roleMenuRelation.setRoleReq(userRoled.getRoleReq());
-                    roleMenuRelation.setStatus(1);
-                    roleMenuRelation.setCreateUser(JwtTokenUtil.currUser());
-                    roleMenuRelation.setUpdateUser(JwtTokenUtil.currUser());
-                    roleMenuRelation.setCreateTime(LocalDateTime.now());
-                    roleMenuRelation.setUpdateTime(LocalDateTime.now());
-                    roleMenuDistributions.add(roleMenuRelation);
-                }
-                userMenuMapper.delUserMenuByRodeIdAndMenuId(userRoled.getRoleId());
-                int res = userMenuMapper.addRoleMenuRelaction(roleMenuDistributions);
             }
             role.setUpateTime(new Date());
             role.setUpdateUser(JwtTokenUtil.currUser());
@@ -794,5 +768,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         responseRecords.setMessage("查询成功");
         return responseRecords;
     }
+
 
 }

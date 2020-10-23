@@ -74,9 +74,6 @@ public class UserServiceImpl implements UserService {
     private UserMenuMapper userMenuMapper;
 
     @Autowired
-    private UserTypeMapper userTypeMapper;
-
-    @Autowired
     private OrganizationMapper organizationMapper;
 
     @Autowired
@@ -85,12 +82,58 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserLoginInfoMapper userLoginInfoMapper;
 
+
+    /**
+     * 根据用户单位、岗位查询用户信息
+     *
+     * @param pageData
+     * @return
+     */
+    @Override
+    public ResponseResultPage<UserInfoDTO> queryUsers(PageData<UserRequest> pageData) {
+        ResponseResultPage<UserInfoDTO> result = new ResponseResultPage<>();
+        try {
+            Page<UserInfoDTO> page = new Page<>(pageData.getCurrent(), pageData.getSize());
+            page.setAsc(pageData.getAscs());
+            page.setDesc(pageData.getDescs());
+            Page<UserInfoDTO> resultPage = userInfoMapper.queryUsers(page, pageData.getCondition());
+            if (ToolUtil.notEmpty(resultPage) && ToolUtil.notEmpty(resultPage.getRecords())) {
+                List<UserInfoDTO> list = resultPage.getRecords();
+                for (UserInfoDTO userInfoDTO : list) {
+                    List<String> accounts = userInfoMapper.queryAccountById(userInfoDTO.getUserId());
+                    if (ToolUtil.notEmpty(accounts)) {
+                        userInfoDTO.setAccounts(accounts);
+                    }
+                    List<OrgList> orgList = userInfoMapper.queryOrgListById(userInfoDTO.getUserId());
+                    if (ToolUtil.notEmpty(orgList)) {
+                        userInfoDTO.setOrgList(orgList);
+                    }
+                    List<RoleList> roleList = userInfoMapper.queryRoleListById(userInfoDTO.getUserId());
+                    if (ToolUtil.notEmpty(roleList)) {
+                        userInfoDTO.setRoleList(roleList);
+                    }
+                }
+            }
+            result.setRecords(resultPage.getRecords());
+            result.setCode(1);
+            result.setSize(pageData.getSize());
+            result.setCurrent(pageData.getCurrent());
+            result.setTotal(resultPage.getTotal());
+            result.setMessage("查询到" + resultPage.getRecords().size() + "条用户信息");
+        } catch (Exception ex) {
+            result.setCode(0);
+            result.setMessage(ex.getMessage());
+            log.error("UserServiceImpl|queryUsers->(根据用户单位、岗位)查询用户信息[" + ex.getMessage() + "]");
+        }
+        return result;
+    }
+
+
     @Override
     @Transactional
     public ResponseBase createUser(UserInfoDTO userInfoDTO) {
         ResponseBase responseBase = new ResponseBase();
         Map<String, Object> map = new HashMap<String, Object>();
-
         if (userInfoDTO.getUserType() == null || userInfoDTO.getUserType().equals("")) {
             responseBase.setCode(0).setMessage("用户类型不能为空");
             return responseBase;
@@ -108,25 +151,25 @@ public class UserServiceImpl implements UserService {
             List<OrgList> orgList1 = userInfoDTO.getOrgList();
             //update ----20200403 --yanghu  --增加之后一对多组织  一个用户可以有多个组织
             //1.0 插入表格 用户组织关系表
-            for (OrgList orgList : orgList1) {
-                if ("4".equals(userInfoDTO.getUserType())) {
-                    int i = organizationMapper.queryCount(orgList.getOrgSeq(), 4);
-                    if (i > 0) {
-                        throw new Exception("该门店已有店主!创建用户失败");
-                    }
-                }
-                if ("5".equals(userInfoDTO.getUserType())) {
-                    int i = organizationMapper.queryCount(orgList.getOrgSeq(), 5);
-                    if (i > 0) {
-                        throw new Exception("该门店已有店长!创建用户失败");
-                    }
-                }
-                UserOrgRelation userOrgRelation = new UserOrgRelation();
-                userOrgRelation.setUuid(UUID.randomUUID().toString()).setStatus(1).setCreateTime(LocalDateTime.now())
-                        .setCreateUser(JwtTokenUtil.currUser()).setUserId(userInfo.getUserId()).setOrgSeq(orgList.getOrgSeq()).
-                        setUserType(Integer.parseInt(userInfo.getUserType())).setUpdateUser(JwtTokenUtil.currUser());
-                userOrgRelationMapper.insert(userOrgRelation);
-            }
+//            for (OrgList orgList : orgList1) {
+//                if ("4".equals(userInfoDTO.getUserType())) {
+//                    int i = organizationMapper.queryCount(orgList.getOrgSeq(), 4);
+//                    if (i > 0) {
+//                        throw new Exception("该门店已有店主!创建用户失败");
+//                    }
+//                }
+//                if ("5".equals(userInfoDTO.getUserType())) {
+//                    int i = organizationMapper.queryCount(orgList.getOrgSeq(), 5);
+//                    if (i > 0) {
+//                        throw new Exception("该门店已有店长!创建用户失败");
+//                    }
+//                }
+//                UserOrgRelation userOrgRelation = new UserOrgRelation();
+//                userOrgRelation.setUuid(UUID.randomUUID().toString()).setStatus(1).setCreateTime(LocalDateTime.now())
+//                        .setCreateUser(JwtTokenUtil.currUser()).setUserId(userInfo.getUserId()).setOrgSeq(orgList.getOrgSeq()).
+//                        setUserType(Integer.parseInt(userInfo.getUserType())).setUpdateUser(JwtTokenUtil.currUser());
+//                userOrgRelationMapper.insert(userOrgRelation);
+//            }
             if (userInfoDTO.getPassword() == null || userInfoDTO.getPassword().equals("")) {
                 throw new Exception("密码不能为空");
             }
@@ -178,6 +221,136 @@ public class UserServiceImpl implements UserService {
         return responseBase;
     }
 
+
+    /**
+     * 2019-3-20：需要确认一下如果修改组织机构，除了修改数据库信息，还有没有其他的注意事项。
+     * 可以以先直接使用修改用户的功能，将来如果有特殊的诉求，再将组织机构修改独立出去。
+     *
+     * @param user
+     * @return
+     */
+    @Transactional
+    @Override
+    public ResponseBase modifyUser(UserInfoDTO user) {
+        ResponseBase responseBase = new ResponseBase();
+        try {
+            if (user != null && StringUtils.isNotBlank(user.getUserId())) {
+                //modifyUser 修改手机号时要判断  手机号不能重复
+                if (user.getTel() == null || user.getTel().equals("")) {
+                    responseBase.setCode(0).setMessage("手机号不能为空");
+                    return responseBase;
+                }
+                QueryWrapper<UserInfo> qw = new QueryWrapper();
+                qw.eq("tel", user.getTel());
+                qw.ne("user_id", user.getUserId());
+                Integer integer = userInfoMapper.selectCount(qw);
+                if (integer > 0) {
+                    responseBase.setCode(0).setMessage("手机号已经存在");
+                    return responseBase;
+                }
+                UserInfo userInfo = new UserInfo();
+                BeanUtils.copyProperties(user, userInfo);
+                if (StringUtils.isNotBlank(user.getPassword())) {
+                    userInfo.setPassword(MD5Util.toMD5(user.getPassword()));
+                }
+                userInfo.setUpdateTime(LocalDateTime.now());
+                userInfo.setUpdateUser(JwtTokenUtil.currUser());
+                int res = userInfoMapper.updateById(userInfo);
+                if (res == 1) {
+                    if (StringUtils.isNotBlank(user.getUserName())) {
+                        UserLoginInfo userLoginInfo = new UserLoginInfo()
+                                .setUserId(userInfo.getUserId()).setAuthCode(user.getUserName())
+                                .setUpdateUser(JwtTokenUtil.currUser()).setOrgSeq(user.getOrgList().get(0).getOrgSeq());
+                        userLoginInfoMapper.updateUserLoginInfo(userLoginInfo);
+                    }
+//                    if (CollectionUtils.isNotEmpty(user.getOrgList())) {
+//                        userOrgRelationMapper.delete(new QueryWrapper<UserOrgRelation>().eq("user_id", user.getUserId()));
+//                        List<UserOrgRelation> list = new ArrayList<>();
+//                        for (OrgList org : user.getOrgList()) {
+//                            if ("4".equals(user.getUserType())) {
+//                                int i = organizationMapper.queryCount(org.getOrgSeq(), 4);
+//                                if (i > 0) {
+//                                    throw new Exception("该门店已有店主!创建用户失败");
+//                                }
+//                            }
+//                            if ("5".equals(user.getUserType())) {
+//                                int i = organizationMapper.queryCount(org.getOrgSeq(), 5);
+//                                if (i > 0) {
+//                                    throw new Exception("该门店已有店长!创建用户失败");
+//                                }
+//                            }
+//                            UserOrgRelation userOrgRelation = new UserOrgRelation();
+//                            userOrgRelation.setUuid(UUID.randomUUID().toString());
+//                            userOrgRelation.setUserId(user.getUserId());
+//                            userOrgRelation.setUserType(Integer.parseInt(user.getUserType()));
+//                            userOrgRelation.setCreateUser(JwtTokenUtil.currUser());
+//                            userOrgRelation.setUpdateUser(JwtTokenUtil.currUser());
+//                            userOrgRelation.setOrgSeq(org.getOrgSeq());
+//                            list.add(userOrgRelation);
+//                        }
+//                        userOrgRelationMapper.batchAdd(list);
+//                    }
+                    responseBase.setCode(1);
+                    responseBase.setMessage("修改用户信息成功");
+                } else {
+                    responseBase.setCode(0);
+                    responseBase.setMessage("修改用户信息失败");
+                }
+            } else {
+                throw new RuntimeException("参数异常");
+            }
+        } catch (Exception e) {
+            responseBase.setCode(0);
+            responseBase.setMessage(e.getMessage());
+            log.error("UserServiceImpl|modifyUser->更新异常[" + e.getLocalizedMessage() + "]");
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); //事务回滚
+        }
+        return responseBase;
+    }
+
+
+    /**
+     * 设置用户角色
+     *
+     * @param userId
+     * @param roleCodes
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public ResponseBase setUserRoles(String userId, List<String> roleCodes) {
+        ResponseBase responseBase = new ResponseBase();
+        try {
+            String logingUserId = JwtTokenUtil.currUser();
+            List<UserUserRoleRelation> list = new ArrayList<>();
+            for (String roleCode : roleCodes) {
+                UserUserRoleRelation userRoleRelation = new UserUserRoleRelation();
+                userRoleRelation.setUserRoleRelationId(UUID.randomUUID().toString());
+                userRoleRelation.setRoleId(roleCode);
+                userRoleRelation.setUserId(userId);
+                userRoleRelation.setStatus(1);
+                userRoleRelation.setCreateUser(logingUserId);
+                userRoleRelation.setUpdateUser(logingUserId);
+                list.add(userRoleRelation);
+            }
+            userUserRoleRelationMapper.batchDelUserRoleRelationByUserIdAndRoleId(userId);
+            int res = userUserRoleRelationMapper.bathcAdd(list);
+            if (res > 0) {
+                responseBase.setMessage("设置用户角色成功");
+                responseBase.setCode(1);
+            } else {
+                responseBase.setMessage("设置用户角色失败");
+                responseBase.setCode(0);
+            }
+        } catch (Exception e) {
+            responseBase.setCode(0);
+            responseBase.setMessage(e.getMessage());
+        }
+
+        return responseBase;
+    }
+
+      1
     /**
      * 根据店铺 id 查询店长或者店员信息
      *
@@ -274,92 +447,7 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
-    /**
-     * 2019-3-20：需要确认一下如果修改组织机构，除了修改数据库信息，还有没有其他的注意事项。
-     * 可以以先直接使用修改用户的功能，将来如果有特殊的诉求，再将组织机构修改独立出去。
-     *
-     * @param user
-     * @return
-     */
-    @Transactional
-    @Override
-    public ResponseBase modifyUser(UserInfoDTO user) {
-        ResponseBase responseBase = new ResponseBase();
-        try {
-            if (user != null && StringUtils.isNotBlank(user.getUserId())) {
 
-                //modifyUser 修改手机号时要判断  手机号不能重复
-                if (user.getTel() == null || user.getTel().equals("")) {
-                    responseBase.setCode(0).setMessage("手机号不能为空");
-                    return responseBase;
-                }
-                QueryWrapper<UserInfo> qw = new QueryWrapper();
-                qw.eq("tel", user.getTel());
-                qw.ne("user_id", user.getUserId());
-                Integer integer = userInfoMapper.selectCount(qw);
-                if (integer > 0) {
-                    responseBase.setCode(0).setMessage("手机号已经存在");
-                    return responseBase;
-                }
-                UserInfo userInfo = new UserInfo();
-                BeanUtils.copyProperties(user, userInfo);
-                if (StringUtils.isNotBlank(user.getPassword())) {
-                    userInfo.setPassword(MD5Util.toMD5(user.getPassword()));
-                }
-                userInfo.setUpdateTime(LocalDateTime.now());
-                userInfo.setUpdateUser(JwtTokenUtil.currUser());
-                int res = userInfoMapper.updateById(userInfo);
-                if (res == 1) {
-                    if (StringUtils.isNotBlank(user.getUserName())) {
-                        UserLoginInfo userLoginInfo = new UserLoginInfo()
-                                .setUserId(userInfo.getUserId()).setAuthCode(user.getUserName())
-                                .setUpdateUser(JwtTokenUtil.currUser()).setOrgSeq(user.getOrgList().get(0).getOrgSeq());
-                        userLoginInfoMapper.updateUserLoginInfo(userLoginInfo);
-                    }
-                    if (CollectionUtils.isNotEmpty(user.getOrgList())) {
-                        userOrgRelationMapper.delete(new QueryWrapper<UserOrgRelation>().eq("user_id", user.getUserId()));
-                        List<UserOrgRelation> list = new ArrayList<>();
-                        for (OrgList org : user.getOrgList()) {
-                            if ("4".equals(user.getUserType())) {
-                                int i = organizationMapper.queryCount(org.getOrgSeq(), 4);
-                                if (i > 0) {
-                                    throw new Exception("该门店已有店主!创建用户失败");
-                                }
-                            }
-                            if ("5".equals(user.getUserType())) {
-                                int i = organizationMapper.queryCount(org.getOrgSeq(), 5);
-                                if (i > 0) {
-                                    throw new Exception("该门店已有店长!创建用户失败");
-                                }
-                            }
-                            UserOrgRelation userOrgRelation = new UserOrgRelation();
-                            userOrgRelation.setUuid(UUID.randomUUID().toString());
-                            userOrgRelation.setUserId(user.getUserId());
-                            userOrgRelation.setUserType(Integer.parseInt(user.getUserType()));
-                            userOrgRelation.setCreateUser(JwtTokenUtil.currUser());
-                            userOrgRelation.setUpdateUser(JwtTokenUtil.currUser());
-                            userOrgRelation.setOrgSeq(org.getOrgSeq());
-                            list.add(userOrgRelation);
-                        }
-                        userOrgRelationMapper.batchAdd(list);
-                    }
-                    responseBase.setCode(1);
-                    responseBase.setMessage("修改用户信息成功");
-                } else {
-                    responseBase.setCode(0);
-                    responseBase.setMessage("修改用户信息失败");
-                }
-            } else {
-                throw new RuntimeException("参数异常");
-            }
-        } catch (Exception e) {
-            responseBase.setCode(0);
-            responseBase.setMessage(e.getMessage());
-            log.error("UserServiceImpl|modifyUser->更新异常[" + e.getLocalizedMessage() + "]");
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); //事务回滚
-        }
-        return responseBase;
-    }
 
     @Override
     public ResponseBase deleteUser(String userId) {
@@ -408,46 +496,6 @@ public class UserServiceImpl implements UserService {
         return responseBase;
     }
 
-    /**
-     * 设置用户角色
-     *
-     * @param userId
-     * @param roleCodes
-     * @return
-     */
-    @Override
-    @Transactional(rollbackFor = {Exception.class})
-    public ResponseBase setUserRoles(String userId, List<String> roleCodes) {
-        ResponseBase responseBase = new ResponseBase();
-        try {
-            String logingUserId = JwtTokenUtil.currUser();
-            List<UserUserRoleRelation> list = new ArrayList<>();
-            for (String roleCode : roleCodes) {
-                UserUserRoleRelation userRoleRelation = new UserUserRoleRelation();
-                userRoleRelation.setUserRoleRelationId(UUID.randomUUID().toString());
-                userRoleRelation.setRoleId(roleCode);
-                userRoleRelation.setUserId(userId);
-                userRoleRelation.setStatus(1);
-                userRoleRelation.setCreateUser(logingUserId);
-                userRoleRelation.setUpdateUser(logingUserId);
-                list.add(userRoleRelation);
-            }
-            userUserRoleRelationMapper.batchDelUserRoleRelationByUserIdAndRoleId(userId);
-            int res = userUserRoleRelationMapper.bathcAdd(list);
-            if (res > 0) {
-                responseBase.setMessage("设置用户角色成功");
-                responseBase.setCode(1);
-            } else {
-                responseBase.setMessage("设置用户角色失败");
-                responseBase.setCode(0);
-            }
-        } catch (Exception e) {
-            responseBase.setCode(0);
-            responseBase.setMessage(e.getMessage());
-        }
-
-        return responseBase;
-    }
 
 
     @Override
@@ -507,50 +555,7 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
-    /**
-     * 根据用户单位、岗位查询用户信息
-     *
-     * @param pageData
-     * @return
-     */
-    @Override
-    public ResponseResultPage<UserInfoDTO> queryUsers(PageData<UserRequest> pageData) {
-        ResponseResultPage<UserInfoDTO> result = new ResponseResultPage<>();
-        try {
-            Page<UserInfoDTO> page = new Page<>(pageData.getCurrent(), pageData.getSize());
-            page.setAsc(pageData.getAscs());
-            page.setDesc(pageData.getDescs());
-            Page<UserInfoDTO> resultPage = userInfoMapper.queryUsers(page, pageData.getCondition());
-            if (ToolUtil.notEmpty(resultPage) && ToolUtil.notEmpty(resultPage.getRecords())) {
-                List<UserInfoDTO> list = resultPage.getRecords();
-                for (UserInfoDTO userInfoDTO : list) {
-                    List<String> accounts = userInfoMapper.queryAccountById(userInfoDTO.getUserId());
-                    if (ToolUtil.notEmpty(accounts)) {
-                        userInfoDTO.setAccounts(accounts);
-                    }
-                    List<OrgList> orgList = userInfoMapper.queryOrgListById(userInfoDTO.getUserId());
-                    if (ToolUtil.notEmpty(orgList)) {
-                        userInfoDTO.setOrgList(orgList);
-                    }
-                    List<RoleList> roleList = userInfoMapper.queryRoleListById(userInfoDTO.getUserId());
-                    if (ToolUtil.notEmpty(roleList)) {
-                        userInfoDTO.setRoleList(roleList);
-                    }
-                }
-            }
-            result.setRecords(resultPage.getRecords());
-            result.setCode(1);
-            result.setSize(pageData.getSize());
-            result.setCurrent(pageData.getCurrent());
-            result.setTotal(resultPage.getTotal());
-            result.setMessage("查询到" + resultPage.getRecords().size() + "条用户信息");
-        } catch (Exception ex) {
-            result.setCode(0);
-            result.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|queryUsers->(根据用户单位、岗位)查询用户信息[" + ex.getMessage() + "]");
-        }
-        return result;
-    }
+
 
     /**
      * 根据用户ID查询用户角色

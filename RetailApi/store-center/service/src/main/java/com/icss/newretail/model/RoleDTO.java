@@ -41,6 +41,8 @@ public class RoleDTO {
     @ApiModelProperty(value = "备注")
     private String comments;
 
+    private Integer roleSort;
+
     @ApiModelProperty(value = "可分配的菜单menuIds")
     private List<String> menuIds;
 

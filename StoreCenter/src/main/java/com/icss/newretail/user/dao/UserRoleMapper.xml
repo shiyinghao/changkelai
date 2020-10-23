@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.icss.newretail.user.dao.UserRoleMapper">
     <select id="getAllRoles" resultType="com.icss.newretail.model.RoleDTO">
-        SELECT role_id,role_req,role_name,role_type,role_desc,status,create_time,create_user,
+        SELECT role_id,role_req,role_name,role_type,role_desc,status,create_time,create_user,role_sort,
         upate_time,update_user,comments
         FROM t_user_role
         where 1=1
@@ -13,6 +13,13 @@
             AND role_type =#{roleType}
         </if>
         order by role_type
+    </select>
+
+    <select id="getOtherRoles" resultType="com.icss.newretail.model.RoleDTO">
+       SELECT role_id,role_req,role_name,role_type,role_desc,status,create_time,create_user,role_sort,
+        upate_time,update_user,comments
+        FROM t_user_role
+        where  a.role_sort > #{roleSort}
     </select>
 
     <select id="getUserRolesByUserId" resultType="com.icss.newretail.model.RoleDTO">
@@ -26,5 +33,6 @@
     <select id="getUserRoleByRoleId" resultType="com.icss.newretail.model.RoleDTO">
         SELECT * FROM t_user_role WHERE role_id=#{roleId}
     </select>
+
 
 </mapper>

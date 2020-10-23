@@ -16,4 +16,12 @@ public interface OrganizationMapper extends BaseMapper<UserOrganization> {
 
     List<OrganizationDTO> getSonOrg(@Param("upOrgSeq") String upOrgSeq);
 
+    int queryCount(@Param("orgSeq") String orgList,@Param("userType") Integer UserType);
+
+    List<OrganizationTypeDTO> getUserOrgType(@Param("orgType") String orgType,@Param("orgTypeName") String orgTypeName);
+
+    List<OrgReslutDTO> queryStoreOrgseq(@Param("orgSeq") String orgSeq);
+
+    OrganizationDTO getOrgSeqType(@Param("orgSeq") String orgSeq);
+
 }

@@ -60,7 +60,7 @@
     </select>
 
     <select id="findRoleByUserId" parameterType="java.lang.String" resultType="com.icss.newretail.model.RoleList">
-      SELECT b.role_id,b.role_name    FROM  t_user_user_role_relation AS a
+      SELECT b.role_id,b.role_name,b.role_sort    FROM  t_user_user_role_relation AS a
     INNER JOIN  t_user_role AS b  ON  b.role_id = a.role_id WHERE a.user_id = #{userId}
     </select>
 

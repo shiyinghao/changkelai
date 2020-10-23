@@ -29,4 +29,5 @@ public interface UserRoleMapper extends BaseMapper<UserRole> {
 	 */
 	RoleDTO getUserRoleByRoleId(String roleId);
 
+	List<RoleDTO> getOtherRoles(@Param("roleSort") String roleSort, @Param("roleType") String roleType);
 }

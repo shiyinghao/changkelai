@@ -13,6 +13,7 @@ import com.icss.newretail.model.RoleList;
 import com.icss.newretail.model.UmsParameter;
 import com.icss.newretail.service.user.AuthService;
 import com.icss.newretail.user.dao.LoginMapper;
+import com.icss.newretail.user.dao.StoreMapper;
 import com.icss.newretail.user.dao.UserInfoMapper;
 import com.icss.newretail.user.dao.UserLoginInfoMapper;
 import com.icss.newretail.user.entity.UserInfo;

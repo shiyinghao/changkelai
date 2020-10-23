@@ -20,6 +20,17 @@ public class UserApi {
     @Autowired
     private UserService userService;
 
+    /**
+     * 门店员工查询（根据名称，电话进行模糊查询）
+     *
+     * @param pageData
+     * @return update   需要返回人员角色id、name、所属组织id、name
+     */
+    @PostMapping(path = "queryUsers")
+    public ResponseResultPage<UserInfoDTO> queryUsers(@RequestBody PageData<UserRequest> pageData) {
+        return userService.queryUsers(pageData);
+    }
+
     @PostMapping(path = "createUser")
     public ResponseBase createUser(@RequestBody UserInfoDTO user) {
         return userService.createUser(user);
@@ -188,16 +199,6 @@ public class UserApi {
         return userService.queryManagerById(orgSeq);
     }
 
-    /**
-     * 门店员工查询（根据名称，电话进行模糊查询）
-     *
-     * @param pageData
-     * @return update   需要返回人员角色id、name、所属组织id、name
-     */
-    @PostMapping(path = "queryUsers")
-    public ResponseResultPage<UserInfoDTO> queryUsers(@RequestBody PageData<UserRequest> pageData) {
-        return userService.queryUsers(pageData);
-    }
 
     /**
      * 根据门店orgSeq查出该门店下的所有人员，包括店主店长,可根员工名称和电话模糊查询
