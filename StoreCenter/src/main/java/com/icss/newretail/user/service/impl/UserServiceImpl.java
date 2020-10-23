@@ -31,6 +31,7 @@ import com.icss.newretail.user.dao.UserLoginInfoMapper;
 import com.icss.newretail.user.dao.UserMenuMapper;
 import com.icss.newretail.user.dao.UserOrgRelationMapper;
 import com.icss.newretail.user.dao.UserRoleMapper;
+import com.icss.newretail.user.dao.UserTypeMapper;
 import com.icss.newretail.user.dao.UserUserRoleRelationMapper;
 import com.icss.newretail.user.entity.UserInfo;
 import com.icss.newretail.user.entity.UserLoginInfo;
@@ -81,6 +82,7 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserLoginInfoMapper userLoginInfoMapper;
+
 
 
     /**
@@ -350,7 +352,6 @@ public class UserServiceImpl implements UserService {
         return responseBase;
     }
 
-      1
     /**
      * 根据店铺 id 查询店长或者店员信息
      *
@@ -498,11 +499,6 @@ public class UserServiceImpl implements UserService {
 
 
 
-    @Override
-    public ResponseBase forgetPassword(String userAuthId, Integer authType) {
-        return null;
-    }
-
     /**
      * 重置密码
      *
@@ -578,26 +574,6 @@ public class UserServiceImpl implements UserService {
         return responseResult;
     }
 
-    /**
-     * 根据用户ID获取用户菜单
-     *
-     * @param para
-     * @return
-     */
-    @Override
-    public ResponseRecords<MenuDTO> getUserMenus(UserMenuRequest para) {
-        ResponseRecords<MenuDTO> responseResult = new ResponseRecords<>();
-        try {
-            List<MenuDTO> userMenus = userMenuMapper.getUserMenus(para);
-            responseResult.setCode(1);
-            responseResult.setMessage("查询成功");
-            responseResult.setRecords(userMenus);
-        } catch (Exception e) {
-            responseResult.setCode(0);
-            responseResult.setMessage(e.getMessage());
-        }
-        return responseResult;
-    }
 
     /**
      * 用户信息查询（根据用户ID）
@@ -625,118 +601,6 @@ public class UserServiceImpl implements UserService {
         return result;
     }
 
-    /**
-     * 用户类型添加
-     *
-     * @param userTypeDTO
-     * @return
-     */
-    @Override
-    public ResponseBase createUserType(UserTypeDTO userTypeDTO) {
-        ResponseBase base = new ResponseBase();
-        try {
-            UserType userType = Object2ObjectUtil.parseObject(userTypeDTO, UserType.class);
-            userType.setCreateUser(JwtTokenUtil.currUser());
-            userType.setUpdateUser(JwtTokenUtil.currUser());
-            Integer count = userTypeMapper.insert(userType);
-            base.setCode(1);
-            base.setMessage("用户类型添加完成，受影响数据条数count=" + count);
-        } catch (Exception ex) {
-            base.setCode(0);
-            base.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|createUserType->用户类型添加[" + ex.getMessage() + "]");
-        }
-        return base;
-    }
-
-    /**
-     * 用户类型修改
-     *
-     * @param userTypeDTO
-     * @return
-     */
-    @Override
-    public ResponseBase modifyUserType(UserTypeDTO userTypeDTO) {
-        ResponseBase base = new ResponseBase();
-        try {
-            UserType userType = Object2ObjectUtil.parseObject(userTypeDTO, UserType.class);
-            userType.setUpdateUser(JwtTokenUtil.currUser());
-            Integer i = userTypeMapper.updateById(userType);
-            base.setMessage("用户类型修改完成");
-            base.setCode(1);
-        } catch (Exception ex) {
-            base.setCode(0);
-            base.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|modifyUserType->用户类型修改" + ex.getMessage());
-        }
-        return base;
-    }
-
-    /**
-     * 删除用户类型
-     *
-     * @param userType
-     * @return
-     */
-    @Override
-    public ResponseBase deleteUserType(String userType) {
-        ResponseBase base = new ResponseBase();
-        try {
-            int count = userTypeMapper.deleteById(userType);
-            base.setCode(1);
-            base.setMessage("用户类型删除完成，受影响数据行数count=" + count);
-        } catch (Exception ex) {
-            base.setCode(0);
-            base.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|deleteUserType->删除用户类型" + ex.getMessage());
-        }
-        return base;
-    }
-
-    /**
-     * 用户类型查询（单个）
-     *
-     * @param id
-     * @return
-     */
-    @Override
-    public ResponseResult<UserTypeDTO> queryUserTypeById(String id) {
-        ResponseResult<UserTypeDTO> result = new ResponseResult<>();
-        try {
-            UserType userType = userTypeMapper.selectById(id);
-            UserTypeDTO userTypeDTO = Object2ObjectUtil.parseObject(userType, UserTypeDTO.class);
-            result.setCode(1);
-            result.setResult(userTypeDTO);
-            result.setMessage("用户类型查询(单个)完成，userTypeDTO=" + userTypeDTO);
-        } catch (Exception ex) {
-            result.setCode(0);
-            result.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|queryUserTypeById->用户类型查询（单个）[" + ex.getMessage() + "]");
-        }
-        return result;
-    }
-
-    /**
-     * 用户类型查询（根据userTypeName模糊查询）
-     *
-     * @param userTypeName
-     * @return
-     */
-    @Override
-    public ResponseRecords<UserTypeDTO> queryUserTypes(String userTypeName) {
-        ResponseRecords<UserTypeDTO> result = new ResponseRecords<>();
-        try {
-            List<UserTypeDTO> list = userTypeMapper.queryUserTypes(userTypeName);
-            result.setRecords(list);
-            result.setCode(1);
-            result.setMessage("用户类型查询完成，共有" + list.size() + "条数据");
-        } catch (Exception ex) {
-            result.setCode(0);
-            result.setMessage(ex.getMessage());
-            log.error("UserServiceImpl|queryUserTypes->用户类型查询（根据userTypeName模糊查询）[" + ex.getMessage() + "]");
-        }
-        return result;
-    }
 
     /**
      * 店长授权

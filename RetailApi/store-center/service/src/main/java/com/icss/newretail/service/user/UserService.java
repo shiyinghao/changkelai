@@ -44,7 +44,6 @@ public interface UserService {
      * @param authType:认证方式
      * @return
      */
-    public ResponseBase forgetPassword(String userAuthId, Integer authType);
 
     public ResponseBase resetPassword(String userId, String newPassword);
 
@@ -67,7 +66,6 @@ public interface UserService {
      * @param para
      * @return
      */
-    public ResponseRecords<MenuDTO> getUserMenus( UserMenuRequest para);
 
     /**
      * 根据用户ID查询基本信息
@@ -77,17 +75,6 @@ public interface UserService {
      */
     public ResponseResult<UserInfoDTO> queryUserById(String userId);
     
-    // UserType ===================================================
-    public ResponseBase createUserType(UserTypeDTO userType);
-
-    public ResponseBase modifyUserType(UserTypeDTO userType);
-
-    public ResponseBase deleteUserType(String userType);
-
-    public ResponseResult<UserTypeDTO> queryUserTypeById(String userType);
-    
-    public ResponseRecords<UserTypeDTO> queryUserTypes(String userTypeName);
-
     /**
      * 店长授权
      *
